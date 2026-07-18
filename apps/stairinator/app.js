@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var model = Stair.model, storage = Stair.storage, elevation = Stair.elevation;
-  var gpxLib = Stair.gpx, align = Stair.align;
+  var gpxLib = window.GpxParse, align = Stair.align;
 
   // ---- state ----
   var doc = model.normalizeDoc(storage.load());

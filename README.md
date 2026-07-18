@@ -17,13 +17,16 @@ Each app has its own README with fuller detail.
 index.html          landing page — links to the three apps
 style.css           landing page styling only
 shared/
-  fit/decode.js     the FIT decoder, used by all three apps
+  fit/decode.js     FIT binary → message structure
+  fit/encode.js     message structure → FIT binary, plus the write primitives
   fit/adapters.js   views over a decoded file (activity model, point stream)
+  gpx/parse.js      GPX → point stream (read-only)
+docs/               FIT format reference
 test/run.js         regression tests — node test/run.js
 apps/
-  stairinator/      + its own FIT *encoder* (synthesises a file)
+  stairinator/      src/fit.js is now just the stair-specific message layout
   lap-graphs/
-  swim-corrector/   + its own FIT *encoder* (byte-faithful rewrite)
+  swim-corrector/
 ```
 
 The apps are plain classic `<script>` tags rather than ES modules, precisely so
@@ -39,7 +42,7 @@ stays verifiable.
 - [x] **Phase 1 — one repo, one front page.** Git histories stripped, apps moved
       under `apps/`, landing page added. No app code merged.
 - [x] **Phase 2 — merge the FIT decoder.** Three decoders became one.
-- [ ] **Phase 3 — encoders and GPX.**
+- [x] **Phase 3 — encoders and GPX.** Byte-level writing shared; GPX moved.
 - [ ] **Phase 4 — shared CSS design tokens.**
 
 ### Phase 2 — how the decoders were merged
@@ -65,22 +68,30 @@ grapher) and `toPointStream()` (GPX-shaped, for the stair builder). The correcto
 has no adapter — it works on the raw structure because it mutates and re-encodes
 it.
 
-The two **encoders were deliberately not merged**: stairinator's synthesises a
-file from an app model, the corrector's replays a decoded structure. They share
-only CRC and the 14-byte header. That is Phase 3.
-
 Verified by capturing decoder output for every sample file before the merge and
 diffing after: all 15 app/file combinations byte-identical, including the
 round-trips. `test/run.js` now covers this permanently.
 
+### Phase 3 — encoders and GPX
+
+The two encoders still don't merge at the message layer, and shouldn't: a
+rewrite is driven by the definitions already in the file, a synthesis declares
+its own. But everything *below* that layer was duplicated, and now isn't — the
+CRC, the byte sink, definition writing, field writing and header assembly all
+live in `shared/fit/encode.js`.
+
+What's left in `apps/stairinator/src/fit.js` is only the stair-specific part:
+which messages it emits, and what goes in them.
+
+The GPX parser had no counterpart to merge with, so it just moved to
+`shared/gpx/parse.js`. Its global changed from `Stair.gpx` to `GpxParse` now
+that it isn't stairinator's.
+
+Verified the same way: the synthesised file is byte-for-byte what it was before
+the refactor, pinned in the tests by a SHA-256 so it can't drift silently.
+
 ### Known loose ends
 
-- `FIT_FORMAT_REFERENCE.md` exists three times. The lap-graphs and swim-corrector
-  copies are byte-identical; stairinator's is a divergent variant that needs a
-  manual reconcile before they collapse into one `docs/`.
-- `apps/stairinator/build-release.sh` still bundles Stairinator alone, and now
-  under-bundles it — the zip needs `shared/` too, or the released app breaks.
-  **Fix this before the next release.**
 - `apps/lap-graphs/docs/` still describes the original TypeScript/React version
   (`src/fit/parseFit.ts` and similar). Stale, but historical rather than wrong.
 

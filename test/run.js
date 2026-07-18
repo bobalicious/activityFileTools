@@ -13,7 +13,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const D = require(path.join(ROOT, 'shared/fit/decode.js'));
 const A = require(path.join(ROOT, 'shared/fit/adapters.js'));
-const E = require(path.join(ROOT, 'apps/swim-corrector/js/fit-encode.js'));
+const E = require(path.join(ROOT, 'shared/fit/encode.js'));
 
 let passed = 0, failed = 0;
 function check(name, fn) {
@@ -36,7 +36,7 @@ function loadStairFit() {
   const ctx = { console, DataView, Uint8Array, ArrayBuffer, Math, Date, String, Number, Array, Object, JSON, Error };
   ctx.window = ctx; ctx.self = ctx; ctx.globalThis = ctx;
   vm.createContext(ctx);
-  for (const f of ['shared/fit/decode.js', 'shared/fit/adapters.js', 'apps/stairinator/src/fit.js']) {
+  for (const f of ['shared/fit/decode.js', 'shared/fit/adapters.js', 'shared/fit/encode.js', 'apps/stairinator/src/fit.js']) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
   }
   return ctx;
@@ -163,6 +163,39 @@ check('adapters agree on heart rate', () => {
     const a = pts[i].hr, b = samples[i].heartRate;
     if (a !== (b === undefined ? null : b)) throw new Error('hr differs at ' + i + ': ' + a + ' vs ' + b);
   }
+});
+
+console.log('\nshared/fit/encode.js');
+
+check('assembleFile writes a valid header and CRC', () => {
+  const sink = new E.ByteSink();
+  sink.bytes([0x40, 0, 0, 0, 0, 0]); // a minimal, meaningless data section
+  const file = E.assembleFile(sink.toUint8Array(), { headerSize: 14, protocolVersion: 0x20, profileVersion: 2140 });
+  eq(file[0], 14, 'header size');
+  eq(String.fromCharCode(file[8], file[9], file[10], file[11]), '.FIT', 'signature');
+  eq(D.crcOver(file, 0, 12), file[12] | (file[13] << 8), 'header CRC');
+  eq(D.crcOver(file, 0, file.length - 2), file[file.length - 2] | (file[file.length - 1] << 8), 'file CRC');
+});
+
+check('writeField substitutes the invalid sentinel for null', () => {
+  const sink = new E.ByteSink();
+  E.writeField(sink, null, 0x02, 1, true);      // uint8  -> 0xFF
+  E.writeField(sink, null, 0x84, 2, true);      // uint16 -> 0xFFFF
+  E.writeField(sink, null, 0x8C, 4, true);      // uint32z -> 0
+  const b = sink.toUint8Array();
+  eq(b[0], 0xFF, 'uint8 invalid');
+  eq(b[1] | (b[2] << 8), 0xFFFF, 'uint16 invalid');
+  eq(b[3] | b[4] | b[5] | b[6], 0, 'uint32z invalid');
+});
+
+check('stairinator encoder output is byte-stable', () => {
+  // Pins the synthesised file against accidental drift — the encoder refactor
+  // that moved its byte-writing into shared/ must not change a single byte.
+  const crypto = require('crypto');
+  eq(fitBytes.length, 12947, 'encoded length');
+  eq(crypto.createHash('sha256').update(Buffer.from(fitBytes)).digest('hex'),
+     'bfcb393ed56389a4984d7bf72b683046223a4a8c4b67b08e62f3611999426a4a',
+     'encoded bytes drifted');
 });
 
 // --- real files, when they happen to be present (gitignored personal data) ---

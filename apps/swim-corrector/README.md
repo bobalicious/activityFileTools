@@ -18,13 +18,14 @@ from `file://`. Your file is read, edited and rewritten entirely in the page; it
 is never uploaded anywhere.
 
 ```
-index.html          markup
-app.css             styling, light + dark
-../../shared/fit/decode.js   FIT binary → message structure (shared)
-js/fit-encode.js    message structure → FIT binary
-js/swim-model.js    swim semantics: detection, corrections, recalculation
-js/chart.js         the per-length bar chart (hand-rolled SVG)
-js/ui.js            everything the user touches
+index.html                  markup
+app.css                     styling, light + dark
+js/swim-model.js            swim semantics: detection, corrections, recalculation
+js/chart.js                 the per-length bar chart (hand-rolled SVG)
+js/ui.js                    everything the user touches
+
+../../shared/fit/decode.js  FIT binary → message structure
+../../shared/fit/encode.js  message structure → FIT binary
 ```
 
 ## What it does

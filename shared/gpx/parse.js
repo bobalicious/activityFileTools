@@ -1,8 +1,13 @@
-// gpx.js — parse GPX (DOMParser) to extract HR/time points. Output is FIT now,
-// so this module only reads; see fit.js for writing (and FIT input).
-(function () {
+/* GPX parser — reads HR/time/location points out of a GPX file via DOMParser.
+ *
+ * Read-only: nothing here writes GPX. The output shape deliberately matches
+ * shared/fit/adapters.js toPointStream(), so a caller can accept either file
+ * type and not care which it got.
+ *
+ * Browser-only, unlike the FIT modules — it depends on DOMParser.
+ */
+(function (root) {
   'use strict';
-  window.Stair = window.Stair || {};
 
   function firstChildLocal(node, local) {
     for (var i = 0; i < node.childNodes.length; i++) {
@@ -62,5 +67,9 @@
     return { points: points, hasHr: hasHr, hasGps: hasGps, hasTime: hasTime, name: nameEl ? nameEl.textContent : null };
   }
 
-  Stair.gpx = { parse: parse };
-})();
+  var api = { parse: parse };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.GpxParse = api;
+
+})(typeof self !== 'undefined' ? self : this);
