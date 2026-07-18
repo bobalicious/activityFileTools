@@ -47,9 +47,12 @@ body {
 }
 .app-bar .spacer { flex: 1 1 auto; }
 
+/* Min-height matches a .small button, so the bar is the same height whether or
+   not it has any buttons in it — settings.html has none. */
 .app-nav {
   display: inline-flex;
   align-items: center;
+  min-height: 2.125rem;
   gap: 0.4rem;
   color: var(--text-muted);
   font-size: 0.875rem;

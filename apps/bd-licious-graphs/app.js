@@ -5,7 +5,7 @@
   var SPECS = G.METRIC_SPECS, COLORS = G.METRIC_COLORS;
   var GRAPH_TYPES = [['line', 'Line'], ['bar', 'Bar'], ['range', 'Range'], ['trace', 'Trace']];
   var STATS = [['min', 'Min'], ['max', 'Max'], ['avg', 'Avg']];
-  var CFG_KEY = 'bd-licious.graph-configs', ZONE_KEY = 'bd-licious.hr-zones';
+  var CFG_KEY = 'activity-tools.graphs.configs', ZONE_KEY = 'activity-tools.graphs.hr-zones';
   var DEFAULT_ZONES = [120, 140, 160, 175, 190];
 
   function loadJSON(key, fallback) { try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; } }

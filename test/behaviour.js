@@ -102,6 +102,14 @@ function run(app, mode) {
             return el ? getComputedStyle(el).maxWidth : null;
           })(),
           ownExportImport: !!document.querySelector('#btn-export, #btn-import'),
+          barHeight: (function () {
+            var b = document.querySelector('.app-bar');
+            return b ? Math.round(b.getBoundingClientRect().height) : null;
+          })(),
+          iconSvg: (function () {
+            var i = document.querySelector('.app-header .app-icon svg');
+            return i ? i.outerHTML.replace(/\s+/g, ' ') : null;
+          })(),
           helpOpens: !!(modal && !modal.classList.contains('hidden')),
           modalPreexisting: !!modalBefore
         });
@@ -128,6 +136,8 @@ function run(app, mode) {
 
 let fails = 0;
 const widths = [];
+const bars = [];
+const icons = {};
 function check(label, cond, extra) {
   if (!cond) { fails++; console.log('  FAIL  ' + label + (extra ? '  → ' + extra : '')); }
   else console.log('  ok    ' + label);
@@ -145,7 +155,10 @@ for (const app of APPS) {
   check('standard app bar', bad.appBar);
   check('Settings reachable from the app', bad.settingsLink);
   check('no app-level export/import', !bad.ownExportImport);
+  check('header icon rendered from the shared set', !!bad.iconSvg, bad.iconSvg);
   widths.push([app.name, bad.pageWidth]);
+  bars.push([app.name, bad.barHeight]);
+  icons[app.name] = bad.iconSvg;
 
   console.log(app.name + ' — good file');
   const good = run(app, 'good');
@@ -157,7 +170,11 @@ for (const app of APPS) {
   check('no error left over', !good.errorShown, good.errorTitle);
 }
 
-console.log('\npage width');
+console.log('\nchrome');
+const barSet = [...new Set(bars.map(b => b[1]))];
+check('every app bar is the same height', barSet.length === 1,
+  bars.map(b => b[0] + '=' + b[1]).join(', '));
+
 const distinct = [...new Set(widths.map(w => w[1]))];
 check('all screens are the same width', distinct.length === 1,
   widths.map(w => w[0] + '=' + w[1]).join(', '));

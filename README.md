@@ -29,6 +29,7 @@ shared/
   ui/markdown.js    the tiny renderer behind it
   ui/chart-theme.js chart palette, matched to tokens.css
   ui/settings.js    the registry of everything the suite stores
+  ui/icons.js       the app icons, drawn to one recipe
 docs/               FIT format reference
 test/run.js         FIT and settings tests — node test/run.js
 test/behaviour.js   UI behaviour, in a real browser
@@ -181,6 +182,10 @@ that makes that possible — **an app that starts saving something new must add
 its key there, or that data is silently missing from every backup.** A test
 asserts the registry only lists keys the apps actually use.
 
+Storage keys follow one scheme — `activity-tools.<app>.<thing>`. They were
+renamed outright rather than migrated, on the basis that there was nothing
+stored worth keeping; anything saved under the old keys is orphaned.
+
 An import replaces whole keys rather than merging inside them; a half-merged
 set of machines and plans is harder to reason about than a clean swap, and
 exporting first is cheap. Old bare Stairinator exports (`{machines, plans}`)
@@ -189,12 +194,21 @@ are still recognised, so existing backups aren't stranded.
 The grapher is called **bd-licious graphs** everywhere now, including its
 directory, rather than "Lap Graphs" in some places.
 
+**Icons** come from `shared/ui/icons.js`, so the mark on a landing card and the
+one in that app's header cannot drift apart. They follow one recipe, taken from
+the swim corrector's original: 20x20, 1.6 stroke, round caps, everything drawn
+in `var(--accent)` so each icon takes its app's colour and follows light/dark
+for free, one element at 0.45 opacity for depth, and exactly one filled circle
+as the focal point. Tests assert the recipe holds and that no page references an
+icon name that doesn't exist — a typo there renders nothing, silently.
+
+The app bar is a constant height everywhere. It had been shorter on
+`settings.html`, because the bar takes its height from its tallest child and
+that page has no Help/Settings buttons to set it; `.app-nav` now carries the
+same min-height as a small button.
+
 ### Known loose ends
 
-- localStorage keys are still inconsistent (`stairinator.doc.v1`,
-  `bd-licious.*`). Renaming them needs a migration or it orphans real saved
-  data, so it's deliberately left for its own piece of work. `settings.js`
-  hides the inconsistency from users either way.
 - `apps/bd-licious-graphs/docs/` still describes the original TypeScript/React version
   (`src/fit/parseFit.ts` and similar). Stale, but historical rather than wrong.
 

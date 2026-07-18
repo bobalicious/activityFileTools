@@ -13,7 +13,7 @@
   'use strict';
 
   var KEYS = [
-    { key: 'stairinator.doc.v1', app: 'Stairinator',
+    { key: 'activity-tools.stairinator.doc', app: 'Stairinator',
       label: 'Stair machines and activities',
       describe: function (v) {
         if (!v || typeof v !== 'object') return null;
@@ -21,13 +21,13 @@
         return m + (m === 1 ? ' machine' : ' machines') + ', ' +
                p + (p === 1 ? ' activity' : ' activities');
       } },
-    { key: 'bd-licious.graph-configs', app: 'bd-licious graphs',
+    { key: 'activity-tools.graphs.configs', app: 'bd-licious graphs',
       label: 'Saved graph configurations',
       describe: function (v) {
         if (!Array.isArray(v)) return null;
         return v.length + (v.length === 1 ? ' configuration' : ' configurations');
       } },
-    { key: 'bd-licious.hr-zones', app: 'bd-licious graphs',
+    { key: 'activity-tools.graphs.hr-zones', app: 'bd-licious graphs',
       label: 'Heart-rate zones',
       describe: function (v) {
         return Array.isArray(v) ? v.join(' · ') + ' bpm' : null;
@@ -90,7 +90,7 @@
     if (Array.isArray(parsed.machines) || Array.isArray(parsed.plans)) {
       var doc = { schemaVersion: parsed.schemaVersion || 1,
                   machines: parsed.machines || [], plans: parsed.plans || [] };
-      return { 'stairinator.doc.v1': doc };
+      return { 'activity-tools.stairinator.doc': doc };
     }
     throw new Error('That file is not an Activity File Tools settings export.');
   }

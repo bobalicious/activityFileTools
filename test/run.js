@@ -219,8 +219,8 @@ console.log('\nshared/ui/settings.js');
   });
 
   check('round-trips every stored key', () => {
-    localStorage.setItem('stairinator.doc.v1', JSON.stringify(doc));
-    localStorage.setItem('bd-licious.hr-zones', JSON.stringify(zones));
+    localStorage.setItem('activity-tools.stairinator.doc', JSON.stringify(doc));
+    localStorage.setItem('activity-tools.graphs.hr-zones', JSON.stringify(zones));
     const payload = S.exportAll();
     eq(Object.keys(payload.data).length, 2, 'export key count');
 
@@ -229,22 +229,22 @@ console.log('\nshared/ui/settings.js');
 
     const res = S.importAll(payload);
     eq(res.applied.length, 2, 'applied count');
-    eq(JSON.stringify(JSON.parse(localStorage.getItem('stairinator.doc.v1'))), JSON.stringify(doc), 'doc');
-    eq(JSON.stringify(JSON.parse(localStorage.getItem('bd-licious.hr-zones'))), JSON.stringify(zones), 'zones');
+    eq(JSON.stringify(JSON.parse(localStorage.getItem('activity-tools.stairinator.doc'))), JSON.stringify(doc), 'doc');
+    eq(JSON.stringify(JSON.parse(localStorage.getItem('activity-tools.graphs.hr-zones'))), JSON.stringify(zones), 'zones');
   });
 
   check('leaves keys the file does not mention alone', () => {
     S.clear();
-    localStorage.setItem('bd-licious.hr-zones', JSON.stringify(zones));
-    S.importAll({ format: S.FORMAT, version: 1, data: { 'stairinator.doc.v1': doc } });
-    assert(localStorage.getItem('bd-licious.hr-zones') !== null, 'untouched key was cleared');
+    localStorage.setItem('activity-tools.graphs.hr-zones', JSON.stringify(zones));
+    S.importAll({ format: S.FORMAT, version: 1, data: { 'activity-tools.stairinator.doc': doc } });
+    assert(localStorage.getItem('activity-tools.graphs.hr-zones') !== null, 'untouched key was cleared');
   });
 
   check('accepts a legacy bare Stairinator export', () => {
     S.clear();
     const res = S.importAll({ machines: doc.machines, plans: doc.plans });
     eq(res.applied.length, 1, 'applied count');
-    const back = JSON.parse(localStorage.getItem('stairinator.doc.v1'));
+    const back = JSON.parse(localStorage.getItem('activity-tools.stairinator.doc'));
     eq(back.machines.length, 1, 'machines');
     eq(back.plans.length, 1, 'plans');
   });
@@ -252,7 +252,7 @@ console.log('\nshared/ui/settings.js');
   check('ignores unknown keys rather than writing them', () => {
     S.clear();
     const res = S.importAll({ format: S.FORMAT, version: 1,
-      data: { 'stairinator.doc.v1': doc, 'something.else': { a: 1 } } });
+      data: { 'activity-tools.stairinator.doc': doc, 'something.else': { a: 1 } } });
     eq(res.applied.length, 1, 'applied');
     eq(res.skipped.length, 1, 'skipped');
     eq(localStorage.getItem('something.else'), null, 'unknown key was written');
@@ -266,12 +266,12 @@ console.log('\nshared/ui/settings.js');
 
   check('summary describes what is stored', () => {
     S.clear();
-    localStorage.setItem('stairinator.doc.v1', JSON.stringify(doc));
+    localStorage.setItem('activity-tools.stairinator.doc', JSON.stringify(doc));
     const rows = S.summary();
-    const stair = rows.filter(r => r.key === 'stairinator.doc.v1')[0];
+    const stair = rows.filter(r => r.key === 'activity-tools.stairinator.doc')[0];
     eq(stair.present, true, 'present');
     eq(stair.detail, '1 machine, 1 activity', 'detail');
-    const zonesRow = rows.filter(r => r.key === 'bd-licious.hr-zones')[0];
+    const zonesRow = rows.filter(r => r.key === 'activity-tools.graphs.hr-zones')[0];
     eq(zonesRow.present, false, 'unstored key should not be present');
   });
 
@@ -295,6 +295,52 @@ console.log('\nshared/ui/settings.js');
   });
 
   S.clear();
+})();
+
+console.log('\nshared/ui/icons.js');
+
+(function () {
+  const Icons = require(path.join(ROOT, 'shared/ui/icons.js'));
+
+  check('every data-icon in the pages names a real icon', () => {
+    // A typo here renders nothing at all, silently — worth catching.
+    const pages = ['index.html', 'settings.html',
+      'apps/stairinator/index.html', 'apps/bd-licious-graphs/index.html',
+      'apps/swim-corrector/index.html'];
+    let found = 0;
+    pages.forEach(function (rel) {
+      const html = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+      const names = (html.match(/data-icon="([^"]+)"/g) || [])
+        .map(function (m) { return m.slice(11, -1); });
+      names.forEach(function (n) {
+        found++;
+        assert(Object.prototype.hasOwnProperty.call(Icons.PATHS, n),
+          rel + ' references unknown icon "' + n + '"');
+      });
+    });
+    assert(found >= 7, 'expected icons on every page, found ' + found);
+  });
+
+  check('the same icon is identical wherever it is used', () => {
+    // The landing card and the app header must not drift apart.
+    eq(Icons.svg('swim'), Icons.svg('swim'), 'swim');
+    assert(Icons.svg('swim').indexOf('var(--accent)') > 0, 'icon should take the app accent');
+  });
+
+  check('unknown icon names yield nothing rather than broken markup', () => {
+    eq(Icons.svg('nope'), '', 'expected an empty string');
+  });
+
+  check('every icon follows the shared drawing rules', () => {
+    Object.keys(Icons.PATHS).forEach(function (name) {
+      const svg = Icons.svg(name);
+      assert(svg.indexOf('viewBox="0 0 20 20"') > 0, name + ': wrong viewBox');
+      assert(svg.indexOf('stroke-width="1.6"') > 0, name + ': wrong stroke width');
+      assert(svg.indexOf('stroke-linecap="round"') > 0, name + ': not round-capped');
+      assert(svg.indexOf('opacity=".45"') > 0, name + ': missing the dimmed element');
+      assert((svg.match(/<circle/g) || []).length >= 1, name + ': missing the filled circle');
+    });
+  });
 })();
 
 // --- real files, when they happen to be present (gitignored personal data) ---

@@ -1,9 +1,10 @@
-// storage.js — localStorage persistence + JSON export/import.
+// storage.js — localStorage persistence. Backup and restore live at the top
+// level; see settings.html and shared/ui/settings.js.
 (function () {
   'use strict';
   window.Stair = window.Stair || {};
   var model = Stair.model;
-  var KEY = 'stairinator.doc.v1';
+  var KEY = 'activity-tools.stairinator.doc';
 
   function emptyDoc() {
     return { schemaVersion: model.SCHEMA_VERSION, machines: [], plans: [] };
