@@ -10,28 +10,33 @@
 </head>
 <body>
 
-<a class="app-nav" href="../../index.html">← All tools</a>
+<div class="app-bar">
+  <div class="app-bar-inner">
+    <a class="app-nav" href="../../index.html">← All tools</a>
+    <span class="spacer"></span>
+    <button id="btn-help" class="ghost small">Help</button>
+    <a class="btn-link" href="../../settings.html">Settings</a>
+  </div>
+</div>
 
-<header class="topbar">
-  <div class="logo">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M1 13.5c1.8 0 1.8 1.6 3.6 1.6s1.8-1.6 3.6-1.6 1.8 1.6 3.6 1.6 1.8-1.6 3.6-1.6 1.8 1.6 3.6 1.6"
-            stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/>
-      <path d="M1 17c1.8 0 1.8 1.6 3.6 1.6S6.4 17 8.2 17s1.8 1.6 3.6 1.6S13.6 17 15.4 17s1.8 1.6 3.6 1.6"
-            stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
-      <circle cx="13.5" cy="4.2" r="2.2" fill="var(--accent)"/>
-      <path d="M4 10.2 8.8 7l4 2.2" stroke="var(--accent)" stroke-width="1.6"
-            stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <h1>Swim FIT Corrector</h1>
-  </div>
-  <div class="grow"></div>
-  <div class="header-actions">
-    <button id="btn-help" class="ghost">Help</button>
-  </div>
+<header class="app-header">
+  <h1>
+    <span class="app-icon" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+        <path d="M1 13.5c1.8 0 1.8 1.6 3.6 1.6s1.8-1.6 3.6-1.6 1.8 1.6 3.6 1.6 1.8-1.6 3.6-1.6 1.8 1.6 3.6 1.6"
+              stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M1 17c1.8 0 1.8 1.6 3.6 1.6S6.4 17 8.2 17s1.8 1.6 3.6 1.6S13.6 17 15.4 17s1.8 1.6 3.6 1.6"
+              stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
+        <circle cx="13.5" cy="4.2" r="2.2" fill="var(--accent)"/>
+        <path d="M4 10.2 8.8 7l4 2.2" stroke="var(--accent)" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>Swim FIT Corrector
+  </h1>
+  <p class="tagline">Fix pool swims where the watch missed a turn, or saw one that never happened.</p>
 </header>
 
-<main class="wrap">
+<main class="page">
 
   <h2 class="step"><span class="step-num">1</span>Open a pool swim FIT file</h2>
   <p class="hint">
@@ -153,10 +158,14 @@ lengths — and devices disagree wildly about how many to write. The export
 offers **one record per length**, which is as dense as the data can honestly
 go. Turn it off to keep the watch's own records exactly as they were.
 
-## Corrections are not saved
+## Saving your work
 
-Reloading the page loses any corrections you have made. Export before you
-leave.
+This tool keeps nothing between visits: the loaded file and every correction
+you make live only in the page. **Reloading loses your corrections, so export
+the corrected file before you leave.**
+
+The other tools do save settings, and those are backed up together under
+**Settings** in the bar at the top of the page.
 </script>
 
 <script src="../../shared/fit/decode.js"></script>

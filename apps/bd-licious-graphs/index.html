@@ -9,9 +9,21 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <a class="app-nav" href="../../index.html">← All tools</a>
+    <div class="app-bar">
+      <div class="app-bar-inner">
+        <a class="app-nav" href="../../index.html">← All tools</a>
+        <span class="spacer"></span>
+        <button id="btn-help" class="ghost small">Help</button>
+        <a class="btn-link" href="../../settings.html">Settings</a>
+      </div>
+    </div>
 
-    <main class="app" id="app"></main>
+    <header class="app-header">
+      <h1><span class="app-icon" aria-hidden="true">📊</span>bd-licious graphs</h1>
+      <p class="tagline">Drop a <code>.fit</code> file to graph your interval session.</p>
+    </header>
+
+    <main class="page" id="app"></main>
 
     <!-- Help text, rendered by the Help modal. Embedded rather than fetched so
          it works from file://. Kept in step with README.md by hand. -->
@@ -47,15 +59,26 @@ re-classifies every lap, which discards any rest flags you set by hand.
 
 ## Saved configurations
 
-Give a set of metric rows a name and **Save config** to keep it. Saved configs
-and your HR zone boundaries persist in this browser; the loaded file and the
-graph theme do not.
+Give a set of metric rows a name and **Save config** to keep it, then click its
+chip to load it again.
 
 ## Graph theme
 
 **Graph theme** controls the colours of the chart itself and of the exported
 PNG — light or dark. It is independent of the page, which follows your
 operating system's appearance setting.
+
+## Saving your work
+
+Saved configurations and your heart-rate zone boundaries are kept in this
+browser, on this computer. The loaded file, the graph theme and the rest
+sensitivity are not — they reset when you reload.
+
+To back them up, or to move them to another browser or computer, open
+**Settings** from the bar at the top of the page. **Export settings** writes a
+single file covering every tool in the suite; **Import settings** reads one
+back. An import replaces whatever that file contains, so export first if you
+want a copy of what is here now.
     </script>
 
     <!-- No build, no server: plain classic scripts that run from file:// -->

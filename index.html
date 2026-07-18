@@ -9,53 +9,62 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Activity File Tools</h1>
-      <p class="tagline">
-        Read, graph, correct and build FIT and GPX activity files — entirely in
-        your browser. Nothing is uploaded anywhere.
-      </p>
-    </header>
 
-    <main>
-      <ul class="apps">
-        <li>
-          <a class="app" href="apps/stairinator/index.html">
-            <h2>Stairinator</h2>
-            <p>
-              Turn a stair-machine workout into a FIT activity file with accurate
-              altitude, distance, cadence and your recorded heart rate.
-            </p>
-          </a>
-        </li>
-        <li>
-          <a class="app" href="apps/lap-graphs/index.html">
-            <h2>Lap Graphs</h2>
-            <p>
-              Load a FIT file and chart it — metric rows, HR zones, rest
-              detection, per-length swim data, and PNG export.
-            </p>
-          </a>
-        </li>
-        <li>
-          <a class="app" href="apps/swim-corrector/index.html">
-            <h2>Swim FIT Corrector</h2>
-            <p>
-              Fix pool swims where the watch missed a turn, or saw one that never
-              happened, and write a corrected file to re-upload.
-            </p>
-          </a>
-        </li>
-      </ul>
-    </main>
-
-    <footer>
-      <p>
-        Runs from <code>file://</code> — no build, no server, no network. Open
-        <code>index.html</code> and go.
-      </p>
-    </footer>
+<div class="app-bar">
+  <div class="app-bar-inner">
+    <span class="app-nav">Activity File Tools</span>
+    <span class="spacer"></span>
+    <a class="btn-link" href="settings.html">Settings</a>
   </div>
+</div>
+
+<header class="app-header">
+  <h1>Activity File Tools</h1>
+  <p class="tagline">
+    Read, graph, correct and build FIT and GPX activity files — entirely in your
+    browser. Nothing is uploaded anywhere.
+  </p>
+</header>
+
+<main class="page">
+  <ul class="apps">
+    <li>
+      <a class="app" href="apps/stairinator/index.html">
+        <h2>🪜 Stairinator</h2>
+        <p>
+          Turn a stair-machine workout into a FIT activity file with accurate
+          altitude, distance, cadence and your recorded heart rate.
+        </p>
+      </a>
+    </li>
+    <li>
+      <a class="app" href="apps/bd-licious-graphs/index.html">
+        <h2>📊 bd-licious graphs</h2>
+        <p>
+          Load a FIT file and chart it — metric rows, HR zones, rest
+          detection, per-length swim data, and PNG export.
+        </p>
+      </a>
+    </li>
+    <li>
+      <a class="app" href="apps/swim-corrector/index.html">
+        <h2>🏊 Swim FIT Corrector</h2>
+        <p>
+          Fix pool swims where the watch missed a turn, or saw one that never
+          happened, and write a corrected file to re-upload.
+        </p>
+      </a>
+    </li>
+  </ul>
+
+  <footer>
+    <p>
+      Runs from <code>file://</code> — no build, no server, no network. Open
+      <code>index.html</code> and go. Everything the tools remember lives under
+      <a href="settings.html">Settings</a>.
+    </p>
+  </footer>
+</main>
+
 </body>
 </html>

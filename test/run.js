@@ -198,10 +198,109 @@ check('stairinator encoder output is byte-stable', () => {
      'encoded bytes drifted');
 });
 
+console.log('\nshared/ui/settings.js');
+
+// settings.js talks to localStorage; give it one.
+(function () {
+  const store = {};
+  global.localStorage = {
+    getItem: function (k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+    setItem: function (k, v) { store[k] = String(v); },
+    removeItem: function (k) { delete store[k]; },
+    _store: store
+  };
+  const S = require(path.join(ROOT, 'shared/ui/settings.js'));
+
+  const doc = { schemaVersion: 1, machines: [{ id: 'm1', name: 'Machine' }], plans: [{ id: 'p1', name: 'Plan' }] };
+  const zones = [120, 140, 160, 175, 190];
+
+  check('exports nothing when nothing is stored', () => {
+    eq(Object.keys(S.exportAll().data).length, 0, 'expected an empty export');
+  });
+
+  check('round-trips every stored key', () => {
+    localStorage.setItem('stairinator.doc.v1', JSON.stringify(doc));
+    localStorage.setItem('bd-licious.hr-zones', JSON.stringify(zones));
+    const payload = S.exportAll();
+    eq(Object.keys(payload.data).length, 2, 'export key count');
+
+    S.clear();
+    eq(Object.keys(S.exportAll().data).length, 0, 'clear left something behind');
+
+    const res = S.importAll(payload);
+    eq(res.applied.length, 2, 'applied count');
+    eq(JSON.stringify(JSON.parse(localStorage.getItem('stairinator.doc.v1'))), JSON.stringify(doc), 'doc');
+    eq(JSON.stringify(JSON.parse(localStorage.getItem('bd-licious.hr-zones'))), JSON.stringify(zones), 'zones');
+  });
+
+  check('leaves keys the file does not mention alone', () => {
+    S.clear();
+    localStorage.setItem('bd-licious.hr-zones', JSON.stringify(zones));
+    S.importAll({ format: S.FORMAT, version: 1, data: { 'stairinator.doc.v1': doc } });
+    assert(localStorage.getItem('bd-licious.hr-zones') !== null, 'untouched key was cleared');
+  });
+
+  check('accepts a legacy bare Stairinator export', () => {
+    S.clear();
+    const res = S.importAll({ machines: doc.machines, plans: doc.plans });
+    eq(res.applied.length, 1, 'applied count');
+    const back = JSON.parse(localStorage.getItem('stairinator.doc.v1'));
+    eq(back.machines.length, 1, 'machines');
+    eq(back.plans.length, 1, 'plans');
+  });
+
+  check('ignores unknown keys rather than writing them', () => {
+    S.clear();
+    const res = S.importAll({ format: S.FORMAT, version: 1,
+      data: { 'stairinator.doc.v1': doc, 'something.else': { a: 1 } } });
+    eq(res.applied.length, 1, 'applied');
+    eq(res.skipped.length, 1, 'skipped');
+    eq(localStorage.getItem('something.else'), null, 'unknown key was written');
+  });
+
+  check('rejects a file that is not a settings export', () => {
+    let threw = false;
+    try { S.importAll({ hello: 'world' }); } catch (e) { threw = true; }
+    assert(threw, 'should have thrown');
+  });
+
+  check('summary describes what is stored', () => {
+    S.clear();
+    localStorage.setItem('stairinator.doc.v1', JSON.stringify(doc));
+    const rows = S.summary();
+    const stair = rows.filter(r => r.key === 'stairinator.doc.v1')[0];
+    eq(stair.present, true, 'present');
+    eq(stair.detail, '1 machine, 1 activity', 'detail');
+    const zonesRow = rows.filter(r => r.key === 'bd-licious.hr-zones')[0];
+    eq(zonesRow.present, false, 'unstored key should not be present');
+  });
+
+  check('every key in the registry is one an app actually uses', () => {
+    // A key here that no app writes is a backup of nothing; a key an app writes
+    // that is missing here is silently absent from every backup.
+    const used = [];
+    const sources = [
+      'apps/bd-licious-graphs/app.js',
+      'apps/stairinator/src/storage.js',
+      'apps/swim-corrector/js/ui.js'
+    ];
+    sources.forEach(function (rel) {
+      const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+      const m = src.match(/'[A-Za-z0-9_.-]+\.(?:v\d+|[a-z-]+)'/g) || [];
+      m.forEach(function (q) { used.push(q.slice(1, -1)); });
+    });
+    S.KEYS.forEach(function (k) {
+      assert(used.indexOf(k.key) >= 0, 'registry key not used by any app: ' + k.key);
+    });
+  });
+
+  S.clear();
+})();
+
 // --- real files, when they happen to be present (gitignored personal data) ---
 
 const realFiles = [
-  'apps/lap-graphs/samples',
+  'apps/bd-licious-graphs/samples',
   'apps/swim-corrector/test-data',
 ].flatMap(dir => {
   const abs = path.join(ROOT, dir);

@@ -45,6 +45,11 @@
   --danger: #d03b3b;
   --rest: #9aa4b1;
 
+  /* Layout — every tool's content column is this wide, so moving between them
+     doesn't shift the page around. */
+  --page-max: 1080px;
+  --page-pad: 1.25rem;
+
   /* Shape */
   --radius: 10px;
   --radius-sm: 7px;

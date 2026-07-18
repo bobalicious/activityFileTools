@@ -9,19 +9,18 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="app-nav" href="../../index.html">← All tools</a>
+  <div class="app-bar">
+    <div class="app-bar-inner">
+      <a class="app-nav" href="../../index.html">← All tools</a>
+      <span class="spacer"></span>
+      <button id="btn-help" class="ghost small">Help</button>
+      <a class="btn-link" href="../../settings.html">Settings</a>
+    </div>
+  </div>
 
   <header class="app-header">
-    <div class="app-header-text">
-      <h1>🪜 Stairinator</h1>
-      <p class="tagline">Turn a stair-machine workout into a FIT activity with altitude, distance &amp; cadence.</p>
-    </div>
-    <div class="header-actions">
-      <button id="btn-help" class="ghost">Help</button>
-      <button id="btn-export" class="ghost">Export all</button>
-      <button id="btn-import" class="ghost">Import</button>
-      <input id="file-import" type="file" accept="application/json,.json" hidden>
-    </div>
+    <h1><span class="app-icon" aria-hidden="true">🪜</span>Stairinator</h1>
+    <p class="tagline">Turn a stair-machine workout into a FIT activity with altitude, distance &amp; cadence.</p>
   </header>
 
   <nav class="tabs">
@@ -105,7 +104,7 @@
   </main>
 
   <footer class="app-footer">
-    <span>Everything runs in your browser. Nothing is uploaded. Your machines &amp; plans are saved on this device. · <a href="#" id="footer-help">Read me</a></span>
+    <span>Everything runs in your browser. Nothing is uploaded. Your machines &amp; plans are saved on this device — back them up under <a href="../../settings.html">Settings</a>. · <a href="#" id="footer-help">Read me</a></span>
   </footer>
 
   <!-- README text, rendered by the Help viewer. Embedded (not fetched) so it
@@ -117,12 +116,6 @@
 Turn a stair-machine workout into a **FIT activity file** with accurate altitude,
 distance, cadence and (optionally) your recorded heart rate — all in your browser,
 with nothing to install and no real location data.
-
-## Saving your work
-
-Your stair machines and activities are saved automatically in this browser, on this
-computer. Use **Export all** to back them up to a file, and **Import** to restore
-them (or move them to another computer or browser).
 
 ## How to use it
 
@@ -178,10 +171,16 @@ Time 0:00**. Your **elapsed time** and **per-lap times** are correct; only the
 - If you **don't** upload a file (or it has no heart rate), a record is written
   **every 5 seconds** across the plan.
 
-## Trying it out
+## Saving your work
 
-`sample.gpx` is a short heart-rate-only recording (5 minutes) you can upload in
-step 3 to see the whole thing work.
+Your stair machines and activities are saved automatically in this browser, on
+this computer. Nothing is uploaded anywhere.
+
+To back them up, or to move them to another browser or computer, open
+**Settings** from the bar at the top of the page. **Export settings** writes a
+single file covering every tool in the suite; **Import settings** reads one
+back. An import replaces whatever that file contains, so export first if you
+want a copy of what is here now.
   </script>
 
   <!-- classic scripts, dependency order; works from file:// (no modules/fetch) -->

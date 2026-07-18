@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings — Activity File Tools</title>
+  <link rel="stylesheet" href="shared/ui/tokens.css">
+  <link rel="stylesheet" href="shared/ui/components.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-bar">
+  <div class="app-bar-inner">
+    <a class="app-nav" href="index.html">← All tools</a>
+    <span class="spacer"></span>
+  </div>
+</div>
+
+<header class="app-header">
+  <h1><span class="app-icon" aria-hidden="true">⚙️</span>Settings</h1>
+  <p class="tagline">
+    Everything the tools remember, in one place. It is stored in this browser on
+    this computer — nothing is uploaded anywhere.
+  </p>
+</header>
+
+<main class="page">
+
+  <h2 class="step"><span class="step-num">1</span>What is stored</h2>
+  <div id="stored"></div>
+
+  <h2 class="step"><span class="step-num">2</span>Back up and restore</h2>
+  <p class="hint">
+    Export writes a single file covering every tool. Import reads one back —
+    useful for moving to another browser or computer, or before clearing this
+    one. An import replaces whatever the file contains and leaves the rest alone.
+  </p>
+  <div class="settings-actions">
+    <button id="btn-export" class="primary">Export settings</button>
+    <button id="btn-import">Import settings…</button>
+    <input id="file-import" type="file" accept="application/json,.json" hidden>
+  </div>
+  <div id="io-result"></div>
+
+  <h2 class="step"><span class="step-num">3</span>Clear</h2>
+  <p class="hint">
+    Removes saved settings from this browser. It cannot be undone, so export
+    first if you might want any of it back.
+  </p>
+  <div class="settings-actions">
+    <button id="btn-clear" class="danger">Clear all settings</button>
+  </div>
+  <div id="clear-result"></div>
+
+</main>
+
+<script src="shared/ui/settings.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.Settings;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderStored() {
+    var rows = S.summary();
+    var any = rows.some(function (r) { return r.present; });
+    var html = '<table class="settings-table"><thead><tr>' +
+      '<th>Tool</th><th>What</th><th>Stored</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      html += '<tr' + (r.present ? '' : ' class="is-empty"') + '>' +
+        '<td>' + esc(r.app) + '</td>' +
+        '<td>' + esc(r.label) + '</td>' +
+        '<td>' + (r.present ? esc(r.detail || 'saved') : 'nothing saved yet') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    if (!any) {
+      html += '<p class="hint" style="margin-top:0.75rem">' +
+        'Nothing is saved yet. Use the tools and their settings will appear here.</p>';
+    }
+    $('stored').innerHTML = html;
+  }
+
+  function note(host, kind, title, detail) {
+    $(host).innerHTML = '';
+    var box = document.createElement('div');
+    if (kind === 'error') {
+      box.className = 'error';
+      box.innerHTML = '<span class="error-icon" aria-hidden="true">&#9888;</span><div></div>';
+      var body = box.querySelector('div');
+      var t = document.createElement('strong'); t.textContent = title; body.appendChild(t);
+      if (detail) { var d = document.createElement('span'); d.textContent = detail; body.appendChild(d); }
+    } else {
+      box.className = 'summary';
+      box.textContent = detail ? title + ' ' + detail : title;
+    }
+    $(host).appendChild(box);
+  }
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  $('btn-export').addEventListener('click', function () {
+    var payload = S.exportAll();
+    var count = Object.keys(payload.data).length;
+    if (!count) {
+      note('io-result', 'error', 'Nothing to export.',
+        'None of the tools have saved anything in this browser yet.');
+      return;
+    }
+    payload.exportedAt = new Date().toISOString();
+    var d = new Date();
+    var name = S.filename() + '-' +
+      d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '.json';
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    note('io-result', 'ok', 'Exported ' + name + ' —',
+      count + (count === 1 ? ' setting' : ' settings') + ' saved.');
+  });
+
+  $('btn-import').addEventListener('click', function () { $('file-import').click(); });
+
+  $('file-import').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    $('file-import').value = '';
+    if (!file) return;
+    var fr = new FileReader();
+    fr.onerror = function () {
+      note('io-result', 'error', 'Could not read that file.', 'The browser refused to open it.');
+    };
+    fr.onload = function () {
+      var parsed;
+      try { parsed = JSON.parse(fr.result); }
+      catch (err) {
+        note('io-result', 'error', 'That file is not valid JSON.',
+          'Choose a settings file exported from this page.');
+        return;
+      }
+      var res;
+      try { res = S.importAll(parsed); }
+      catch (err) { note('io-result', 'error', 'Nothing was imported.', err.message); return; }
+
+      if (!res.applied.length) {
+        note('io-result', 'error', 'Nothing was imported.',
+          'That file contained no settings this suite recognises.');
+        return;
+      }
+      var names = res.applied.map(function (k) { return k.label; }).join(', ');
+      var extra = res.skipped.length ? ' Ignored ' + res.skipped.length + ' unrecognised entr' +
+        (res.skipped.length === 1 ? 'y.' : 'ies.') : '';
+      note('io-result', 'ok', 'Imported:', names + '.' + extra);
+      renderStored();
+    };
+    fr.readAsText(file);
+  });
+
+  $('btn-clear').addEventListener('click', function () {
+    if (!confirm('Clear every saved setting for all three tools?\n\nThis cannot be undone.')) return;
+    S.clear();
+    renderStored();
+    note('clear-result', 'ok', 'All saved settings cleared.', '');
+  });
+
+  renderStored();
+})();
+</script>
+</body>
+</html>

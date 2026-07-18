@@ -35,27 +35,11 @@
     }
   }
 
-  function exportBlob(doc) {
-    return new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
-  }
-
-  // Merge an imported doc into the current one (by id; imported wins on clash).
-  function mergeImport(current, imported) {
-    var out = emptyDoc();
-    var byId = {};
-    (current.machines || []).concat(imported.machines || []).forEach(function (m) { byId[m.id] = m; });
-    out.machines = Object.keys(byId).map(function (k) { return byId[k]; });
-    byId = {};
-    (current.plans || []).concat(imported.plans || []).forEach(function (p) { byId[p.id] = p; });
-    out.plans = Object.keys(byId).map(function (k) { return byId[k]; });
-    return out;
-  }
-
+  // Backing up and restoring lives at the top level now — see settings.html and
+  // shared/ui/settings.js — so this only reads and writes.
   Stair.storage = {
     emptyDoc: emptyDoc,
     load: load,
-    save: save,
-    exportBlob: exportBlob,
-    mergeImport: mergeImport
+    save: save
   };
 })();

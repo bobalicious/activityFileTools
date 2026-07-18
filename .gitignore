@@ -17,7 +17,7 @@ dist/
 # Real activity files used as dev fixtures — never commit personal data.
 # Nothing in the apps references these; they read whatever you open via the picker.
 *.fit
-apps/lap-graphs/samples/
+apps/bd-licious-graphs/samples/
 apps/swim-corrector/test-data/
 
 # Scratch preview pages used for visual checks

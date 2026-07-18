@@ -570,24 +570,8 @@
       label: 'Stairinator help'
     });
 
-    // export / import (import button looks like export, drives the hidden input)
-    $('#btn-export').addEventListener('click', function () { download(storage.exportBlob(doc), 'stairinator-data.json'); });
-    $('#btn-import').addEventListener('click', function () { $('#file-import').click(); });
-    $('#file-import').addEventListener('change', function (e) {
-      var f = e.target.files[0]; if (!f) return;
-      var r = new FileReader();
-      r.onload = function () {
-        try {
-          var imported = model.normalizeDoc(JSON.parse(r.result));
-          doc = storage.mergeImport(doc, imported);
-          state.currentPlanId = doc.plans[0] ? doc.plans[0].id : null;
-          state.currentMachineId = doc.machines[0] ? doc.machines[0].id : null;
-          persist(); renderMachines(); refreshPlanUI();
-          alert('Imported ' + (imported.machines || []).length + ' machine(s) and ' + (imported.plans || []).length + ' plan(s).');
-        } catch (err) { alert('Could not import: ' + err.message); }
-      };
-      r.readAsText(f);
-    });
+    // Backing up and restoring is not this app's job — it lives at the top
+    // level, in settings.html, so one export covers every tool.
   }
 
   // ================= init =================

@@ -36,8 +36,8 @@ if (!CHROME) {
 const APPS = [
   { name: 'stairinator', dir: 'apps/stairinator',
     good: 'apps/stairinator/sample.gpx', pre: "document.getElementById('tab-btn-activity').click();" },
-  { name: 'lap-graphs', dir: 'apps/lap-graphs',
-    good: 'apps/lap-graphs/samples/Strictly_Zone_2.fit', pre: '' },
+  { name: 'bd-licious-graphs', dir: 'apps/bd-licious-graphs',
+    good: 'apps/bd-licious-graphs/samples/Strictly_Zone_2.fit', pre: '' },
   { name: 'swim-corrector', dir: 'apps/swim-corrector',
     good: 'apps/swim-corrector/test-data/750m_Breaststroke_Swolf_66.fit', pre: '' },
 ];
@@ -95,6 +95,13 @@ function run(app, mode) {
           detail: loaded ? (loaded.querySelector('.filepanel-detail') || {}).textContent : null,
           actions: loaded ? Array.prototype.map.call(loaded.querySelectorAll('button'), function (b) { return b.textContent; }) : [],
           helpButton: !!help,
+          settingsLink: !!document.querySelector('.app-bar a[href$="settings.html"]'),
+          appBar: !!document.querySelector('.app-bar .app-nav'),
+          pageWidth: (function () {
+            var el = document.querySelector('.page') || document.querySelector('main');
+            return el ? getComputedStyle(el).maxWidth : null;
+          })(),
+          ownExportImport: !!document.querySelector('#btn-export, #btn-import'),
           helpOpens: !!(modal && !modal.classList.contains('hidden')),
           modalPreexisting: !!modalBefore
         });
@@ -120,6 +127,7 @@ function run(app, mode) {
 }
 
 let fails = 0;
+const widths = [];
 function check(label, cond, extra) {
   if (!cond) { fails++; console.log('  FAIL  ' + label + (extra ? '  → ' + extra : '')); }
   else console.log('  ok    ' + label);
@@ -134,6 +142,10 @@ for (const app of APPS) {
   check('drop zone still visible after failure', bad.dropVisible);
   check('help button present', bad.helpButton);
   check('help modal opens', bad.helpOpens);
+  check('standard app bar', bad.appBar);
+  check('Settings reachable from the app', bad.settingsLink);
+  check('no app-level export/import', !bad.ownExportImport);
+  widths.push([app.name, bad.pageWidth]);
 
   console.log(app.name + ' — good file');
   const good = run(app, 'good');
@@ -144,6 +156,11 @@ for (const app of APPS) {
   check('Close offered', (good.actions || []).indexOf('Close') >= 0, JSON.stringify(good.actions));
   check('no error left over', !good.errorShown, good.errorTitle);
 }
+
+console.log('\npage width');
+const distinct = [...new Set(widths.map(w => w[1]))];
+check('all screens are the same width', distinct.length === 1,
+  widths.map(w => w[0] + '=' + w[1]).join(', '));
 
 console.log(fails === 0 ? '\nAll behaviours consistent across the three apps.' : '\n' + fails + ' check(s) failed.');
 process.exit(fails ? 1 : 0);

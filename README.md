@@ -6,7 +6,7 @@ GPX activity files. No build, no server, no network — open `index.html` and go
 | App | What it does |
 |---|---|
 | [Stairinator](apps/stairinator/) | Builds a FIT activity file from a stair-machine workout plan, with altitude, distance, cadence and optional recorded HR |
-| [Lap Graphs](apps/lap-graphs/) | Charts a FIT file — metric rows, HR zones, rest detection, per-length swim data, PNG export |
+| [bd-licious graphs](apps/bd-licious-graphs/) | Charts a FIT file — metric rows, HR zones, rest detection, per-length swim data, PNG export |
 | [Swim FIT Corrector](apps/swim-corrector/) | Finds missed and false pool turns, lets you fix them, and rewrites the file byte-faithfully |
 
 Each app has its own README with fuller detail.
@@ -15,7 +15,8 @@ Each app has its own README with fuller detail.
 
 ```
 index.html          landing page — links to the three apps
-style.css           landing page styling only
+settings.html       saved settings for every tool: view, export, import, clear
+style.css           landing and settings page styling
 shared/
   fit/decode.js     FIT binary → message structure
   fit/encode.js     message structure → FIT binary, plus the write primitives
@@ -27,11 +28,13 @@ shared/
   ui/help.js        the help modal
   ui/markdown.js    the tiny renderer behind it
   ui/chart-theme.js chart palette, matched to tokens.css
+  ui/settings.js    the registry of everything the suite stores
 docs/               FIT format reference
-test/run.js         regression tests — node test/run.js
+test/run.js         FIT and settings tests — node test/run.js
+test/behaviour.js   UI behaviour, in a real browser
 apps/
   stairinator/      src/fit.js is now just the stair-specific message layout
-  lap-graphs/
+  bd-licious-graphs/
   swim-corrector/
 ```
 
@@ -52,6 +55,7 @@ stays verifiable.
 - [x] **Phase 4 — one interaction language.** Shared tokens and components.
 - [x] **Phase 5 — one set of behaviours.** The apps now *act* alike, not just
       look alike.
+- [x] **Phase 6 — one set of chrome, one place for settings.**
 
 ### Phase 2 — how the decoders were merged
 
@@ -162,9 +166,36 @@ nowhere to put a failure that happens later.
 `test/behaviour.js` asserts all of this in a real browser, because it is DOM
 behaviour and cannot be checked any other way.
 
+### Phase 6 — chrome and settings
+
+Every page now carries the same bar (back link, **Help**, **Settings**), the
+same title block, and the same content width — `--page-max`, applied through
+`.page`. Screens were 880 / 900 / 1120px wide before, so moving between tools
+shifted the whole layout.
+
+**Settings moved up.** Stairinator had Export all / Import buttons; the other
+two had no way to back anything up at all, so half your saved work could not be
+moved between browsers. `settings.html` now shows what each tool has stored and
+exports or imports the lot as one file. `shared/ui/settings.js` is the registry
+that makes that possible — **an app that starts saving something new must add
+its key there, or that data is silently missing from every backup.** A test
+asserts the registry only lists keys the apps actually use.
+
+An import replaces whole keys rather than merging inside them; a half-merged
+set of machines and plans is harder to reason about than a clean swap, and
+exporting first is cheap. Old bare Stairinator exports (`{machines, plans}`)
+are still recognised, so existing backups aren't stranded.
+
+The grapher is called **bd-licious graphs** everywhere now, including its
+directory, rather than "Lap Graphs" in some places.
+
 ### Known loose ends
 
-- `apps/lap-graphs/docs/` still describes the original TypeScript/React version
+- localStorage keys are still inconsistent (`stairinator.doc.v1`,
+  `bd-licious.*`). Renaming them needs a migration or it orphans real saved
+  data, so it's deliberately left for its own piece of work. `settings.js`
+  hides the inconsistency from users either way.
+- `apps/bd-licious-graphs/docs/` still describes the original TypeScript/React version
   (`src/fit/parseFit.ts` and similar). Stale, but historical rather than wrong.
 
 ## Tests
@@ -185,6 +216,6 @@ what the user actually ends up looking at.
 
 ## Personal data
 
-`apps/lap-graphs/samples/` and `apps/swim-corrector/test-data/` hold real activity
+`apps/bd-licious-graphs/samples/` and `apps/swim-corrector/test-data/` hold real activity
 files and are gitignored, along with `*.fit` generally. Nothing in the apps
 references them — they read whatever you open through the file picker.

@@ -29,14 +29,9 @@
 
   // ---- rendering ----------------------------------------------------------
   var app = document.getElementById('app');
+  // The page chrome (bar, title, Help) is static markup in index.html, the same
+  // as the other tools — only the app body is rendered here.
   app.innerHTML =
-    '<header class="app-header">' +
-      '<div class="app-header-text">' +
-        '<h1>bd-licious graphs</h1>' +
-        '<p class="tagline">Drop a <code>.fit</code> file to graph your interval session.</p>' +
-      '</div>' +
-      '<div class="header-actions"><button id="btn-help" class="ghost">Help</button></div>' +
-    '</header>' +
     '<h2 class="step"><span class="step-num">1</span>Open a file</h2>' +
     '<div id="file-panel"></div>' +
     '<div id="body"></div>';

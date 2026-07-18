@@ -1,19 +1,12 @@
-/* Landing page layout. Palette and components come from shared/ui/. */
-
-body { padding: 4rem 1.5rem; }
-
-.wrap { max-width: 52rem; margin: 0 auto; }
-
-header { margin-bottom: 2.5rem; }
-
-h1 { margin: 0 0 0.4rem; font-size: 1.9rem; letter-spacing: -0.02em; }
+/* Landing and settings pages. Palette, components and the page width come from
+   shared/ui/. */
 
 .apps {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
   padding: 0;
-  margin: 0;
+  margin: 1.5rem 0 0;
   list-style: none;
 }
 
@@ -39,3 +32,22 @@ h1 { margin: 0 0 0.4rem; font-size: 1.9rem; letter-spacing: -0.02em; }
 
 footer { margin-top: 3rem; color: var(--text-muted); font-size: 0.85rem; }
 footer code { font-size: 0.95em; }
+
+/* ---- settings page ----------------------------------------------------- */
+
+.settings-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.9375rem;
+}
+.settings-table th,
+.settings-table td {
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.settings-table th { color: var(--text-muted); font-size: 0.8125rem; font-weight: 600; }
+.settings-table tr.is-empty td { color: var(--text-muted); }
