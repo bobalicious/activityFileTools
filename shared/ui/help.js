@@ -22,19 +22,19 @@
     var lastFocus = null;
 
     var modal = document.createElement('div');
-    modal.className = 'modal hidden';
+    modal.className = 'help-modal hidden';
     modal.innerHTML =
-      '<div class="modal-backdrop"></div>' +
-      '<div class="modal-panel" role="dialog" aria-modal="true" aria-label="' +
+      '<div class="help-modal-backdrop"></div>' +
+      '<div class="help-modal-panel" role="dialog" aria-modal="true" aria-label="' +
         (opts.label || 'Help') + '">' +
-        '<button class="modal-close" aria-label="Close">&times;</button>' +
+        '<button class="help-modal-close" aria-label="Close">&times;</button>' +
         '<div class="markdown"></div>' +
       '</div>';
     document.body.appendChild(modal);
 
-    var panel = modal.querySelector('.modal-panel');
+    var panel = modal.querySelector('.help-modal-panel');
     var body = modal.querySelector('.markdown');
-    var closeBtn = modal.querySelector('.modal-close');
+    var closeBtn = modal.querySelector('.help-modal-close');
 
     function open() {
       if (!rendered) {
@@ -74,7 +74,7 @@
     }
 
     closeBtn.addEventListener('click', close);
-    modal.querySelector('.modal-backdrop').addEventListener('click', close);
+    modal.querySelector('.help-modal-backdrop').addEventListener('click', close);
     if (opts.trigger) opts.trigger.addEventListener('click', function (e) { e.preventDefault(); open(); });
     (opts.extraTriggers || []).forEach(function (t) {
       if (t) t.addEventListener('click', function (e) { e.preventDefault(); open(); });

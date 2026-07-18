@@ -307,21 +307,27 @@ h1:has(> .step-num), h2:has(> .step-num), h3:has(> .step-num) {
 }
 
 /* ---- help modal -------------------------------------------------------- */
+/* Namespaced deliberately. These were once plain .modal / .modal-panel, which
+   collided with the swim corrector's own split dialog — that dialog's panel is
+   also a .modal, and it does not set position or display, so it inherited
+   `position: fixed; inset: 0; display: flex` from here and laid itself out
+   across the viewport with its head, body and footer in a row. Anything shared
+   that carries layout this assertive needs a name no app would pick. */
 
-.modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
-.modal.hidden { display: none; }
-.modal-backdrop { position: absolute; inset: 0; background: rgba(10, 15, 25, 0.55); }
-.modal-panel {
+.help-modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
+.help-modal.hidden { display: none; }
+.help-modal-backdrop { position: absolute; inset: 0; background: rgba(10, 15, 25, 0.55); }
+.help-modal-panel {
   position: relative; background: var(--surface); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
   max-width: 760px; width: calc(100% - 32px); max-height: calc(100vh - 64px);
   overflow: auto; padding: 24px 28px;
 }
-.modal-close {
+.help-modal-close {
   position: absolute; top: 10px; right: 12px; border: none; background: transparent;
   font-size: 24px; line-height: 1; color: var(--text-muted); cursor: pointer; padding: 4px 8px;
 }
-.modal-close:hover { color: var(--text); }
+.help-modal-close:hover { color: var(--text); }
 
 .markdown { line-height: 1.6; }
 .markdown h1 { font-size: 24px; margin: 0 0 12px; }

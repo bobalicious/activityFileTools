@@ -81,9 +81,9 @@ function run(app, mode) {
         var loaded = document.querySelector('#file-panel .filepanel-loaded');
         var drop = document.querySelector('#file-panel .filedrop');
         var help = document.getElementById('btn-help');
-        var modalBefore = document.querySelector('.modal');
+        var modalBefore = document.querySelector('.help-modal');
         if (help) help.click();
-        var modal = document.querySelector('.modal');
+        var modal = document.querySelector('.help-modal');
         report({
           panelPresent: !!document.getElementById('file-panel'),
           errorShown: !!err,
@@ -233,6 +233,100 @@ console.log('\naccent colours');
   const app = accentOf(row[2], ':root');
   check(row[0] + ' card matches its app', card === app && !!card, 'card=' + card + ' app=' + app);
 });
+
+
+// --- the swim split dialog ---------------------------------------------------
+// This exists because a shared .modal rule once collided with this dialog's own
+// .modal class and laid it out across the whole viewport. Nothing caught it: the
+// dialog only appears after loading a file and clicking Edit, which no test did.
+
+function splitDialogLayout() {
+  const fit = path.join(ROOT, 'apps/swim-corrector/test-data/750m_Breaststroke_Swolf_66.fit');
+  if (!fs.existsSync(fit)) return { skipped: true };
+  const b64 = fs.readFileSync(fit).toString('base64');
+  const drive = `
+<script>
+(function () {
+  var bin = atob('${b64}'), b = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+  var file = new File([b], 'swim.fit');
+  function report(o) {
+    var d = document.createElement('div'); d.id = '__split';
+    d.textContent = JSON.stringify(o); document.body.appendChild(d);
+  }
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      var input = document.querySelector('#file-panel input[type=file]');
+      var dt = new DataTransfer(); dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      var waited = 0;
+      (function settle() {
+        var btns = document.querySelectorAll('#lengthTable button');
+        if (!btns.length && waited < 6000) { waited += 100; return setTimeout(settle, 100); }
+        for (var i = 0; i < btns.length; i++) {
+          if (btns[i].textContent.trim() === 'Edit') { btns[i].click(); break; }
+        }
+        // Poll for the dialog rather than guessing a delay — under load the
+        // fixed wait raced the render and reported a false failure.
+        var w2 = 0;
+        (function awaitPanel() {
+          var p = document.querySelector('.backdrop .modal');
+          if (!p && w2 < 5000) { w2 += 100; return setTimeout(awaitPanel, 100); }
+          var panel = document.querySelector('.backdrop .modal');
+          if (!panel) return report({ open: false });
+          var r = panel.getBoundingClientRect();
+          var cs = getComputedStyle(panel);
+          var head = document.querySelector('.backdrop .modal-head');
+          var foot = document.querySelector('.backdrop .modal-foot');
+          report({
+            open: true,
+            position: cs.position,
+            display: cs.display,
+            width: Math.round(r.width),
+            viewportWidth: window.innerWidth,
+            height: Math.round(r.height),
+            viewportHeight: window.innerHeight,
+            // head must sit above foot: if they are laid out in a row this flips
+            headAboveFoot: !!(head && foot) && head.getBoundingClientRect().bottom <= foot.getBoundingClientRect().top,
+            horizontallyCentred: Math.abs((r.left + r.right) / 2 - window.innerWidth / 2) < 40
+          });
+        })();
+      })();
+    }, 300);
+  });
+})();
+</script>`;
+  const src = path.join(ROOT, 'apps/swim-corrector/index.html');
+  const tmp = path.join(path.dirname(src), '__split-' + path.basename(src));
+  if (path.resolve(tmp) === path.resolve(src)) throw new Error('refusing to overwrite ' + src);
+  fs.writeFileSync(tmp, fs.readFileSync(src, 'utf8').replace('</body>', drive + '</body>'));
+  let dom = '';
+  try {
+    dom = execFileSync(CHROME, ['--headless', '--disable-gpu', '--window-size=1400,1000',
+      '--dump-dom', '--virtual-time-budget=9000', 'file://' + tmp],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+  } catch (e) { dom = ''; }
+  fs.unlinkSync(tmp);
+  const m = dom.match(/<div id="__split">([\s\S]*?)<\/div>/);
+  if (!m) return { open: false };
+  return JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'));
+}
+
+console.log('\nswim split dialog');
+const sd = splitDialogLayout();
+if (sd.skipped) {
+  console.log('  (no sample swim file present — skipped)');
+} else {
+  check('dialog opens from the length table', sd.open, JSON.stringify(sd));
+  check('panel is not pinned to the viewport', sd.position !== 'fixed', 'position=' + sd.position);
+  check('panel is a dialog, not a full-width overlay',
+    sd.width > 300 && sd.width < sd.viewportWidth - 100, 'width=' + sd.width + ' of ' + sd.viewportWidth);
+  check('panel does not fill the viewport height',
+    sd.height < sd.viewportHeight, 'height=' + sd.height + ' of ' + sd.viewportHeight);
+  check('sections stack vertically (head above footer)', sd.headAboveFoot === true, JSON.stringify(sd));
+  check('panel is centred', sd.horizontallyCentred === true, JSON.stringify(sd));
+}
 
 console.log(fails === 0 ? '\nAll behaviours consistent across the three apps.' : '\n' + fails + ' check(s) failed.');
 process.exit(fails ? 1 : 0);
