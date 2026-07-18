@@ -176,7 +176,7 @@
 
     var present = {};
     m.lengths.forEach(function (l, i) {
-      var issues = {}; state.issues.forEach(function (a) { issues[a.index] = a; });
+      var issues = {}; state.issues.forEach(function (a) { flagAll(issues, a); });
       present[C.stateOf(l, issues)] = true;
     });
     C.renderLegend($('legend'), present);
@@ -285,6 +285,12 @@
     dismissed.forEach(function (l) { host.appendChild(dismissedRow(l)); });
   }
 
+  /* A false-turn issue covers the pair either side of the phantom turn, so both
+     lengths are flagged on the chart even though there is only one issue. */
+  function flagAll(map, a) {
+    (a.indices || [a.index]).forEach(function (i) { map[i] = a; });
+  }
+
   function issueRow(a) {
     var missed = a.kind === 'missed_turn';
     var row = document.createElement('div');
@@ -294,23 +300,37 @@
       '<div class="grow"><div class="title"></div><div class="detail"></div></div>' +
       '<span class="confidence"></span>' +
       '<div class="actions"></div>';
-    row.querySelector('.title').textContent = 'Length ' + (a.index + 1) + ' — ' + a.title;
+    row.querySelector('.title').textContent =
+      (a.indices && a.indices.length > 1
+        ? 'Lengths ' + (a.indices[0] + 1) + ' and ' + (a.indices[1] + 1)
+        : 'Length ' + (a.index + 1)) + ' — ' + a.title;
     row.querySelector('.detail').textContent = a.detail;
     row.querySelector('.confidence').textContent = Math.round(a.confidence * 100) + '% confident';
 
     var acts = row.querySelector('.actions');
-    var fix = document.createElement('button');
-    fix.className = 'primary small';
-    fix.textContent = missed ? 'Add the turn…' : 'Remove the turn';
-    fix.addEventListener('click', function () {
-      if (missed) openEditor(a.index);
-      else { S.mergeLength(state.model, a.index); draw(); }
-    });
+    // A lone short length with no neighbour it could merge with has no fix to
+    // offer — only the option to dismiss it.
+    var canFix = missed || a.mergeIndex != null;
+    if (canFix) {
+      var fix = document.createElement('button');
+      fix.className = 'primary small';
+      fix.textContent = missed ? 'Add the turn…'
+        : 'Remove the turn between ' + (a.indices[0] + 1) + ' and ' + (a.indices[1] + 1);
+      fix.addEventListener('click', function () {
+        if (missed) openEditor(a.index);
+        else { S.mergeLength(state.model, a.mergeIndex); draw(); }
+      });
+      acts.appendChild(fix);
+    }
     var skip = document.createElement('button');
     skip.className = 'small ghost';
     skip.textContent = 'Dismiss';
-    skip.addEventListener('click', function () { S.dismiss(state.model, a.index); draw(); });
-    acts.appendChild(fix);
+    // Dismissing a pair has to dismiss both, or the other half is immediately
+    // re-flagged on its own.
+    skip.addEventListener('click', function () {
+      (a.indices || [a.index]).forEach(function (i) { S.dismiss(state.model, i); });
+      draw();
+    });
     acts.appendChild(skip);
     return row;
   }
@@ -366,7 +386,7 @@
     var m = state.model;
     var t = $('lengthTable');
     var issues = {};
-    state.issues.forEach(function (a) { issues[a.index] = a; });
+    state.issues.forEach(function (a) { flagAll(issues, a); });
 
     t.innerHTML = '<thead><tr><th class="l">#</th><th class="l">Stroke</th><th>Time</th>' +
       '<th>Pace</th><th>Strokes</th><th>Cadence</th><th class="l">Status</th><th></th></tr></thead>';

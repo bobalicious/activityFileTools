@@ -382,6 +382,86 @@ console.log('\nshared/ui/icons.js');
   });
 })();
 
+console.log('\nswim-corrector: turns that never happened');
+
+(function () {
+  const S = require(path.join(ROOT, 'apps/swim-corrector/js/swim-model.js'));
+
+  // 45s is a normal length here; strokes track time so both signals agree.
+  function len(sec, opts) {
+    opts = opts || {};
+    return {
+      active: !opts.rest, elapsedMs: sec * 1000, timerMs: sec * 1000,
+      strokes: opts.rest ? null : Math.round(sec / 45 * 18),
+      calories: 5, cadence: 24, startTime: 0, srcIdx: 0, edit: null, origin: 'src'
+    };
+  }
+  function swim(lengths) {
+    lengths.forEach((l, i) => { l.srcIdx = i; l._idx = i; });
+    return { lengths, lapSpans: [], poolLengthM: 25, records: [] };
+  }
+  const falseTurns = m => S.detect(m, { sensitivity: 0.5 }).filter(a => a.kind === 'false_turn');
+
+  check('a phantom turn is one issue covering both short lengths', () => {
+    // The watch split one length in two, so lengths 4 and 5 are each about half.
+    const m = swim([len(45), len(45), len(45), len(22), len(23), len(45), len(45), len(45), len(45)]);
+    const issues = falseTurns(m);
+    eq(issues.length, 1, 'issue count');
+    eq(JSON.stringify(issues[0].indices), '[3,4]', 'pair');
+    assert(issues[0].confidence > 0.8, 'confidence ' + issues[0].confidence);
+  });
+
+  check('the merge joins the two short lengths, not the next normal one', () => {
+    // The bug this replaced: every short length raised its own issue and the fix
+    // always merged forwards, so the second half offered to swallow length 6.
+    const m = swim([len(45), len(45), len(45), len(22), len(23), len(45), len(45), len(45), len(45)]);
+    eq(falseTurns(m)[0].mergeIndex, 3, 'merge index');
+  });
+
+  check('a short length never merges into a long one', () => {
+    const m = swim([len(45), len(45), len(22), len(88), len(45), len(45), len(45)]);
+    const all = S.detect(m, { sensitivity: 0.5 });
+    eq(all.filter(a => a.kind === 'missed_turn').length, 1, 'the long one is still flagged');
+    assert(falseTurns(m).every(a => a.mergeIndex !== 2),
+      'merged the short length into the long one');
+  });
+
+  check('a merge never joins a swum length to a rest', () => {
+    const m = swim([len(45), len(45), len(22), len(30, { rest: true }), len(23), len(45), len(45)]);
+    falseTurns(m).forEach(a => {
+      if (a.mergeIndex == null) return;
+      assert(m.lengths[a.mergeIndex].active && m.lengths[a.mergeIndex + 1].active,
+        'merge at ' + a.mergeIndex + ' spans a rest');
+    });
+  });
+
+  check('a lone short length is reported with low confidence', () => {
+    // Nothing to pair with means no strong claim either way — say so rather
+    // than pretending a merge into a normal length is the fix.
+    const m = swim([len(45), len(45), len(20), len(45), len(45), len(45), len(45)]);
+    const issues = falseTurns(m);
+    eq(issues.length, 1, 'issue count');
+    assert(issues[0].confidence < 0.5, 'confidence ' + issues[0].confidence);
+  });
+
+  check('two phantom turns give two issues, one per pair', () => {
+    const m = swim([len(45), len(45), len(45), len(22), len(23), len(45), len(45),
+                    len(45), len(45), len(45), len(21), len(24), len(45), len(45), len(45)]);
+    const issues = falseTurns(m);
+    eq(issues.length, 2, 'issue count');
+    eq(JSON.stringify(issues.map(a => a.indices)), '[[3,4],[10,11]]', 'pairs');
+  });
+
+  check('merging the pair restores one normal length', () => {
+    const m = swim([len(45), len(45), len(45), len(22), len(23), len(45), len(45), len(45), len(45)]);
+    const a = falseTurns(m)[0];
+    S.mergeLength(m, a.mergeIndex);
+    eq(m.lengths.length, 8, 'length count after merge');
+    eq(m.lengths[3].elapsedMs, 45000, 'merged duration');
+    eq(m.lengths[3].strokes, 18, 'merged strokes');
+  });
+})();
+
 // --- real files, when they happen to be present (gitignored personal data) ---
 
 const realFiles = [

@@ -320,6 +320,7 @@
     var strokeMedian = median(actives.filter(function (x) { return x.strokes != null; })
                                      .map(function (x) { return x.strokes; }));
     var out = [];
+    var shorts = [];
 
     actives.forEach(function (l, i) {
       if (l.edit) return; // corrected or dismissed already
@@ -329,34 +330,136 @@
       var strokeRatio = (useStrokes && l.strokes != null && strokeMedian)
         ? l.strokes / strokeMedian : null;
 
-      var kind = ratio >= t.longRatio ? 'missed_turn'
-               : ratio <= t.shortRatio ? 'false_turn' : null;
-      if (!kind) return;
-
-      var missed = kind === 'missed_turn';
-      out.push({
-        kind: kind,
-        length: l,
-        index: model.lengths.indexOf(l),
-        ratio: ratio,
-        strokeRatio: strokeRatio,
-        medianMs: med,
-        confidence: confidenceFor(missed ? ratio : 1 / ratio,
-                                  strokeRatio == null ? null : (missed ? strokeRatio : 1 / strokeRatio)),
-        title: missed ? 'Missed turn' : 'Turn that never happened',
-        detail: missed
-          ? 'Took ' + fmtDur(l.elapsedMs) + ' — ' + ratio.toFixed(2) + '× the ' +
+      if (ratio >= t.longRatio) {
+        out.push({
+          kind: 'missed_turn',
+          length: l,
+          index: model.lengths.indexOf(l),
+          indices: [model.lengths.indexOf(l)],
+          ratio: ratio,
+          strokeRatio: strokeRatio,
+          medianMs: med,
+          confidence: confidenceFor(ratio, strokeRatio),
+          title: 'Missed turn',
+          detail: 'Took ' + fmtDur(l.elapsedMs) + ' — ' + ratio.toFixed(2) + '× the ' +
             fmtDur(med) + ' median of nearby lengths' +
             (strokeRatio ? ', with ' + strokeRatio.toFixed(2) + '× the strokes' : '') +
             '. Probably two lengths with the turn missed.'
-          : 'Took only ' + fmtDur(l.elapsedMs) + ' — ' + ratio.toFixed(2) + '× the ' +
-            fmtDur(med) + ' median of nearby lengths' +
-            (strokeRatio ? ', with ' + strokeRatio.toFixed(2) + '× the strokes' : '') +
-            '. The watch probably registered a turn mid-length.'
+        });
+      } else if (ratio <= t.shortRatio) {
+        shorts.push({ length: l, med: med, ratio: ratio });
+      }
+    });
+
+    falseTurns(model, shorts, actives, t, strokeMedian, useStrokes, opts)
+      .forEach(function (a) { out.push(a); });
+
+    out.sort(function (a, b) { return a.index - b.index; });
+    return out;
+  }
+
+  /* A turn that never happened splits ONE length into two, so the evidence is a
+   * *pair* whose times add back up to about one length — not a property of a
+   * single short length.
+   *
+   * Flagging each short length on its own produced two issues per phantom turn,
+   * and since the fix always merged forwards, the second one offered to merge
+   * the short length into the normal length after it. That is never the right
+   * move: the turn to remove is the one *between* the two short lengths.
+   *
+   * So each short length looks both ways and keeps the better partner — judged
+   * by how close the merged length would come to the local median, preferring a
+   * neighbour that is itself short. Each pair is reported once.
+   */
+  function falseTurns(model, shorts, actives, t, strokeMedian, useStrokes, opts) {
+    var claimed = {};
+    var issues = [];
+
+    shorts.forEach(function (s) {
+      var mi = model.lengths.indexOf(s.length);
+      if (claimed[mi]) return;
+
+      var best = null;
+      [mi - 1, mi + 1].forEach(function (mj) {
+        var cand = pairing(model, actives, mi, mj, s.med, t, opts);
+        if (!cand || claimed[mj]) return;
+        // A short neighbour is the real signature; otherwise take whichever
+        // merge lands closest to one normal length.
+        if (!best ||
+            (cand.partnerShort && !best.partnerShort) ||
+            (cand.partnerShort === best.partnerShort && cand.err < best.err)) {
+          best = cand;
+        }
+      });
+
+      var first = best ? Math.min(mi, best.mj) : mi;
+      var second = best ? Math.max(mi, best.mj) : null;
+      if (best) { claimed[mi] = true; claimed[best.mj] = true; }
+
+      var a = model.lengths[first];
+      var b = second == null ? null : model.lengths[second];
+      var combined = b ? (a.elapsedMs + b.elapsedMs) / s.med : null;
+      var strokeCombined = (useStrokes && b && strokeMedian &&
+                            a.strokes != null && b.strokes != null)
+        ? (a.strokes + b.strokes) / strokeMedian : null;
+
+      issues.push({
+        kind: 'false_turn',
+        length: s.length,
+        // The merge consumes `index` and the length after it, so a pair must
+        // report the first of the two.
+        index: first,
+        indices: second == null ? [first] : [first, second],
+        mergeIndex: best ? first : null,
+        ratio: s.ratio,
+        combinedRatio: combined,
+        medianMs: s.med,
+        confidence: b ? pairConfidence(combined, strokeCombined)
+                      : clamp(confidenceFor(1 / s.ratio, null) * 0.5),
+        title: 'Turn that never happened',
+        detail: b
+          ? 'Lengths ' + (first + 1) + ' and ' + (second + 1) + ' took ' +
+            fmtDur(a.elapsedMs) + ' and ' + fmtDur(b.elapsedMs) + ' — together ' +
+            fmtDur(a.elapsedMs + b.elapsedMs) + ', about ' + combined.toFixed(2) +
+            '× the ' + fmtDur(s.med) + ' median of nearby lengths' +
+            (strokeCombined ? ', with ' + strokeCombined.toFixed(2) +
+                              '× the strokes between them' : '') +
+            '. The watch probably registered a turn between them.'
+          : 'Took only ' + fmtDur(s.length.elapsedMs) + ' — ' + s.ratio.toFixed(2) +
+            '× the ' + fmtDur(s.med) + ' median of nearby lengths. There is no ' +
+            'neighbouring length in the same lap to merge it with, so this one ' +
+            'has to be judged by eye.'
       });
     });
 
-    return out;
+    return issues;
+  }
+
+  /* Can `mi` merge with `mj`, and how good would the result be? Adjacency is
+   * measured in the length list rather than among active lengths, so a rest
+   * between two swims correctly rules the pairing out. */
+  function pairing(model, actives, mi, mj, med, t, opts) {
+    var a = model.lengths[mi], b = model.lengths[mj];
+    if (!a || !b || !b.active || b.edit) return null;
+    if (!sameLap(model, a, b)) return null;
+
+    var bi = actives.indexOf(b);
+    var bMed = bi >= 0 ? localMedian(actives, bi, opts.window) : med;
+    var combined = (a.elapsedMs + b.elapsedMs) / med;
+    return {
+      mj: mj,
+      err: Math.abs(combined - 1),
+      partnerShort: !!bMed && (b.elapsedMs / bMed) <= t.shortRatio
+    };
+  }
+
+  /* For a pair, the tell is that the two together come to one normal length —
+   * so confidence peaks at 1x, not 2x as it does for a single length. */
+  function pairConfidence(combined, strokeCombined) {
+    var timeScore = 1 - Math.min(1, Math.abs(combined - 1) / 0.5);
+    if (strokeCombined == null) return clamp(timeScore * 0.75);
+    var strokeScore = 1 - Math.min(1, Math.abs(strokeCombined - 1) / 0.5);
+    return clamp(timeScore * 0.5 + strokeScore * 0.5);
   }
 
   /* Both a missed and a false turn should show a 2x discrepancy. Confidence

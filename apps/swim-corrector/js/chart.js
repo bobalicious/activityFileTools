@@ -67,8 +67,12 @@
     var lengths = model.lengths;
     lengths.forEach(function (l, i) { l._idx = i; });
 
+    // A false turn covers the pair either side of it, so one issue can flag two
+    // bars — both halves are anomalous even though there is a single fix.
     var flagged = {};
-    issues.forEach(function (a) { flagged[a.index] = a; });
+    issues.forEach(function (a) {
+      (a.indices || [a.index]).forEach(function (i) { flagged[i] = a; });
+    });
 
     var barW = Math.max(MIN_BAR, Math.min(MAX_BAR,
       Math.floor((svg.parentNode.clientWidth - PAD.left - PAD.right) / Math.max(1, lengths.length)) - GAP));

@@ -130,6 +130,13 @@ that band. Stroke count is checked independently — a missed turn should show
 about double the strokes as well as double the time, and when both agree
 confidence is high. Rest lengths are never flagged.
 
+A turn that never happened splits **one** length into two, so it shows up as a
+*pair* of short lengths whose times add back up to about one normal length.
+That pair is reported as a single anomaly, and the turn removed is the one
+**between them** — not between a short length and whatever follows it. A short
+length with no matching partner is still listed, but with low confidence,
+because there is no second half to corroborate it.
+
 ## What a correction changes
 
 The lengths themselves, then every dependent total: lap and session distance,

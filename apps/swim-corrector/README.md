@@ -50,6 +50,13 @@ Stroke count is checked independently — a missed turn should show about double
 the strokes as well as double the time, and when both agree confidence is high.
 Rest lengths are never flagged.
 
+A turn that never happened splits **one** length into two, so the evidence is a
+*pair* of short lengths whose times add back up to about one normal length. The
+pair is reported as a single anomaly and the turn removed is the one **between
+them** — never between a short length and whatever happens to follow it. A short
+length with no matching partner is still listed, but with low confidence: there
+is no second half to corroborate it.
+
 ## Design notes
 
 Two rules govern the code, both learned the hard way from real files.
