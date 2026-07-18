@@ -705,9 +705,28 @@
     if (outstanding) {
       var warn = document.createElement('span');
       warn.className = 'confidence';
-      warn.textContent = outstanding + ' anomaly still outstanding — resolve or dismiss it first.';
+      warn.textContent = outstanding +
+        (outstanding === 1 ? ' anomaly still outstanding — resolve or dismiss it first.'
+                           : ' anomalies still outstanding — resolve or dismiss them first.');
       btnRow.appendChild(warn);
     }
+
+    // Read before the download, not after: this is the moment a file gets
+    // written and the original gets deleted from Strava.
+    var caution = document.createElement('div');
+    caution.className = 'caution';
+    caution.innerHTML =
+      '<span class="caution-icon" aria-hidden="true">&#9888;</span>' +
+      '<div><strong>Keep your original file</strong>' +
+      '<span>Your original is never altered — the corrected file is written fresh. Keep it ' +
+      'anyway: getting this onto Strava means deleting the original activity there, and ' +
+      're-uploading your original file is the only way back if the result is not what you ' +
+      'wanted.</span>' +
+      '<span>This tool is provided as-is, with no warranty. You are responsible for your ' +
+      'own data: no liability is accepted for corrupted files, lost activities or anything ' +
+      'else arising from its use.</span></div>';
+    body.appendChild(caution);
+
     body.appendChild(btnRow);
 
     var callout = document.createElement('div');

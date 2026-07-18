@@ -273,6 +273,24 @@ h1:has(> .step-num), h2:has(> .step-num), h3:has(> .step-num) {
 .error span:not(.error-icon) { color: var(--text-secondary); font-size: 0.9375rem; }
 .error-icon { color: var(--danger); flex: none; line-height: 1.5; }
 
+/* For the moment a tool is about to write a file. Distinct from .error (which
+   reports something that already went wrong) and from an accent-tinted callout
+   (which is just information). */
+.caution {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  margin-top: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(217, 131, 36, 0.45);
+  border-radius: var(--radius-sm);
+  background: rgba(217, 131, 36, 0.09);
+  font-size: 0.9375rem;
+}
+.caution > div { display: flex; flex-direction: column; gap: 0.25rem; }
+.caution strong { color: var(--warning); }
+.caution-icon { color: var(--warning); flex: none; line-height: 1.5; }
+
 .summary {
   margin-top: 1.25rem;
   padding: 0.6rem 0.9rem;

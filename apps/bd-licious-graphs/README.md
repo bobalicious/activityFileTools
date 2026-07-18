@@ -39,3 +39,14 @@ HR zones, swim support, saved configs, PNG export.
   decoded here — add their field numbers to `fit.js` if a device provides them.
 - Verified headlessly (decoder vs the Garmin SDK values; chart output; UI wiring).
   The PNG export uses browser canvas APIs — confirm it in your browser.
+
+## Your files, and no warranty
+
+**Keep your own copy of any file you care about.** A FIT file cannot really be
+checked by eye, so the original is your only way back if a result turns out
+wrong.
+
+Provided **as-is, with no warranty of any kind, express or implied**. You are
+responsible for your own data. No liability is accepted for corrupted files,
+lost activities, incorrect results, or any other loss arising from use of this
+tool.

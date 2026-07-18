@@ -96,6 +96,19 @@
         </label>
       </div>
       <div id="generate-status" class="summary"></div>
+      <div class="caution">
+        <span class="caution-icon" aria-hidden="true">&#9888;</span>
+        <div>
+          <strong>Keep your own copy of anything you upload</strong>
+          <span>A file you upload here is only ever read, never changed, and the FIT this
+            produces is a brand-new file. Keep your own copy of the original all the same —
+            it is the only way back if the generated activity turns out not to be what you
+            wanted.</span>
+          <span>Provided as-is, with no warranty. You are responsible for your own data: no
+            liability is accepted for corrupted files, lost activities or anything else
+            arising from its use.</span>
+        </div>
+      </div>
       <div class="row">
         <button id="btn-gen-fit" class="primary" disabled>Download FIT file</button>
       </div>
@@ -181,7 +194,17 @@ To back them up, or to move them to another browser or computer, open
 single file covering every tool in the suite; **Import settings** reads one
 back. An import replaces whatever that file contains, so export first if you
 want a copy of what is here now.
-  </script>
+  
+## Your files, and no warranty
+
+Any file you upload is only read, never written to, and the FIT this produces is
+brand new. **Keep your own copy of anything you upload** — it is the only way
+back if the generated activity turns out not to be what you wanted.
+
+This tool is provided **as-is, with no warranty of any kind**. You are
+responsible for your own data: no liability is accepted for corrupted files,
+lost activities, or any other loss arising from its use.
+</script>
 
   <!-- classic scripts, dependency order; works from file:// (no modules/fetch) -->
   <script src="../../shared/fit/decode.js"></script>

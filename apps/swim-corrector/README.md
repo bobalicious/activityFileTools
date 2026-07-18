@@ -187,3 +187,14 @@ The output is validated with **Garmin's official FIT SDK**: `isFIT` true,
 - The undocumented SWOLF and stroke-count fields are inferred from one FR935
   file. If they don't validate against your file, they're left alone rather than
   guessed at.
+
+## Your files, and no warranty
+
+**Keep your own copy of any file you care about.** A FIT file cannot really be
+checked by eye, so the original is your only way back if a result turns out
+wrong.
+
+Provided **as-is, with no warranty of any kind, express or implied**. You are
+responsible for your own data. No liability is accepted for corrupted files,
+lost activities, incorrect results, or any other loss arising from use of this
+tool.

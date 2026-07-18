@@ -102,3 +102,14 @@ See [DESIGN.md](DESIGN.md). The app is plain HTML/CSS/JS with no build step and 
 dependencies; everything attaches to a single global `Stair` namespace. It uses
 classic `<script>` tags (not ES modules) so it works when opened directly from disk
 (`file://`). `src/fit.js` contains a self-contained FIT encoder and decoder.
+
+## Your files, and no warranty
+
+**Keep your own copy of any file you care about.** A FIT file cannot really be
+checked by eye, so the original is your only way back if a result turns out
+wrong.
+
+Provided **as-is, with no warranty of any kind, express or implied**. You are
+responsible for your own data. No liability is accepted for corrupted files,
+lost activities, incorrect results, or any other loss arising from use of this
+tool.

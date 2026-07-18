@@ -249,3 +249,20 @@ what the user actually ends up looking at.
 `apps/bd-licious-graphs/samples/` and `apps/swim-corrector/test-data/` hold real activity
 files and are gitignored, along with `*.fit` generally. Nothing in the apps
 references them — they read whatever you open through the file picker.
+
+## Your files, and no warranty
+
+These tools read and write activity files entirely on your own machine — nothing
+is uploaded anywhere. A file you open is only ever read; anything a tool produces
+is written fresh alongside it.
+
+Even so: **keep your own copy of any file you care about.** A generated or
+corrected file cannot really be inspected by eye — it is binary — so the original
+is your only way back if the result turns out wrong. That matters most with the
+swim corrector, where getting a correction onto Strava means deleting the
+original activity there first.
+
+Provided **as-is, with no warranty of any kind, express or implied**. You are
+responsible for your own data. No liability is accepted for corrupted files,
+lost activities, incorrect results, or any other loss arising from use of these
+tools.
