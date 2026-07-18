@@ -38,6 +38,16 @@
   --accent-ink: #ffffff;
   --accent-soft: rgba(var(--accent-rgb), 0.08);
 
+  /* Each tool's own colour, named once here so the landing page and the tool
+     itself cannot end up showing different colours for the same thing. An app
+     sets --accent from these; the landing page sets them per card. */
+  --accent-stairinator: #128a44;
+  --accent-stairinator-rgb: 18, 138, 68;
+  --accent-graphs: #fc4c02;          /* Strava orange, used sparingly */
+  --accent-graphs-rgb: 252, 76, 2;
+  --accent-swim: #2a78d6;
+  --accent-swim-rgb: 42, 120, 214;
+
   /* Status */
   --good: #1f9d4d;
   --good-text: #127036;
@@ -78,6 +88,13 @@
 
     --accent-soft: rgba(var(--accent-rgb), 0.14);
 
+    --accent-stairinator: #229a52;
+    --accent-stairinator-rgb: 34, 154, 82;
+    --accent-graphs: #fc4c02;
+    --accent-graphs-rgb: 252, 76, 2;
+    --accent-swim: #3987e5;
+    --accent-swim-rgb: 57, 135, 229;
+
     --good: #35b863;
     --good-text: #4cc97a;
     --warning: #e0a03f;
@@ -105,6 +122,13 @@
   --baseline: #3a424d;
 
   --accent-soft: rgba(var(--accent-rgb), 0.14);
+
+  --accent-stairinator: #229a52;
+  --accent-stairinator-rgb: 34, 154, 82;
+  --accent-graphs: #fc4c02;
+  --accent-graphs-rgb: 252, 76, 2;
+  --accent-swim: #3987e5;
+  --accent-swim-rgb: 57, 135, 229;
 
   --good: #35b863;
   --good-text: #4cc97a;

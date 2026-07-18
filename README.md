@@ -111,8 +111,11 @@ controls, `button` rules that agreed on everything except a pixel of radius.
 That is now one set of tokens and one set of components, and the apps keep only
 their layout.
 
-**An app overrides exactly one thing: its accent.** Strava orange in the
-grapher, blue in the other two. `tokens.css` deliberately does *not* set
+**An app overrides exactly one thing: its accent.** Green for Stairinator,
+Strava orange for the grapher, blue for the corrector — named once in
+`tokens.css` as `--accent-stairinator` and friends, so the landing card and the
+tool itself cannot end up showing different colours for the same thing. A test
+compares the two. `tokens.css` deliberately does *not* set
 `--accent` in its dark blocks — those selectors carry higher specificity than a
 plain `:root`, so an app setting its accent normally would be silently
 overridden in dark mode. The app owns that colour in both themes.
@@ -201,6 +204,10 @@ in `var(--accent)` so each icon takes its app's colour and follows light/dark
 for free, one element at 0.45 opacity for depth, and exactly one filled circle
 as the focal point. Tests assert the recipe holds and that no page references an
 icon name that doesn't exist — a typo there renders nothing, silently.
+
+Stairinator's chart keeps its blue plan line rather than following the green
+accent: the heart-rate trace is red, and green/red is the one pairing that
+disappears for the most common form of colour blindness.
 
 The app bar is a constant height everywhere. It had been shorter on
 `settings.html`, because the bar takes its height from its tallest child and

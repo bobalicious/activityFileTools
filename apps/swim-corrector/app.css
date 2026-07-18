@@ -2,22 +2,18 @@
    badges, cards and status messages come from shared/ui/. */
 
 :root {
-  --accent: #2a78d6;
-  --accent-rgb: 42, 120, 214;
+  --accent: var(--accent-swim);
+  --accent-rgb: var(--accent-swim-rgb);
   --series-1-dim: #9ec5f4;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --accent: #3987e5;
-    --accent-rgb: 57, 135, 229;
     --series-1-dim: #1c5cab;
   }
 }
 
 :root[data-theme="dark"] {
-  --accent: #3987e5;
-  --accent-rgb: 57, 135, 229;
   --series-1-dim: #1c5cab;
 }
 

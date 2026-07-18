@@ -2,8 +2,8 @@
    badges, cards and status messages come from shared/ui/. */
 
 :root {
-  --accent: #fc4c02; /* Strava orange, used sparingly */
-  --accent-rgb: 252, 76, 2;
+  --accent: var(--accent-graphs);   /* Strava orange, used sparingly */
+  --accent-rgb: var(--accent-graphs-rgb);
 }
 
 

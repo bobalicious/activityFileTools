@@ -27,6 +27,12 @@
 .app:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
 .app:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* Each card carries its tool's colour, so the icon and the hover border match
+   what you see once you are inside that tool. */
+.app--stairinator { --accent: var(--accent-stairinator); --accent-rgb: var(--accent-stairinator-rgb); }
+.app--graphs      { --accent: var(--accent-graphs);      --accent-rgb: var(--accent-graphs-rgb); }
+.app--swim        { --accent: var(--accent-swim);        --accent-rgb: var(--accent-swim-rgb); }
+
 .app h2 { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 1.05rem; }
 .app p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
 

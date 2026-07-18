@@ -179,5 +179,60 @@ const distinct = [...new Set(widths.map(w => w[1]))];
 check('all screens are the same width', distinct.length === 1,
   widths.map(w => w[0] + '=' + w[1]).join(', '));
 
+
+// --- landing cards must show each tool's own colour -------------------------
+
+function accentOf(rel, selector) {
+  const drive = `
+<script>
+window.addEventListener('load', function () {
+  setTimeout(function () {
+    var el = document.querySelector('${selector}');
+    var cs = el ? getComputedStyle(el) : null;
+    var probe = null;
+    if (el) {
+      // Resolve --accent to a real colour by applying it to something.
+      var d = document.createElement('span');
+      d.style.color = 'var(--accent)';
+      el.appendChild(d);
+      probe = getComputedStyle(d).color;
+      var b = document.createElement('span');
+      b.style.borderColor = 'var(--accent)';
+      b.style.borderStyle = 'solid';
+      el.appendChild(b);
+    }
+    var out = document.createElement('div');
+    out.id = '__accent';
+    out.textContent = probe || 'none';
+    document.body.appendChild(out);
+  }, 250);
+});
+</script>`;
+  const src = path.join(ROOT, rel);
+  const tmp = path.join(path.dirname(src), '__accent-' + path.basename(src));
+  if (path.resolve(tmp) === path.resolve(src)) throw new Error('refusing to overwrite ' + src);
+  fs.writeFileSync(tmp, fs.readFileSync(src, 'utf8').replace('</body>', drive + '</body>'));
+  let dom = '';
+  try {
+    dom = execFileSync(CHROME, ['--headless', '--disable-gpu', '--dump-dom',
+      '--virtual-time-budget=4000', 'file://' + tmp],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+  } catch (e) { dom = ''; }
+  fs.unlinkSync(tmp);
+  const m = dom.match(/<div id="__accent">([\s\S]*?)<\/div>/);
+  return m ? m[1].trim() : null;
+}
+
+console.log('\naccent colours');
+[
+  ['Stairinator', '.app--stairinator', 'apps/stairinator/index.html'],
+  ['bd-licious graphs', '.app--graphs', 'apps/bd-licious-graphs/index.html'],
+  ['Swim FIT Corrector', '.app--swim', 'apps/swim-corrector/index.html'],
+].forEach(function (row) {
+  const card = accentOf('index.html', row[1]);
+  const app = accentOf(row[2], ':root');
+  check(row[0] + ' card matches its app', card === app && !!card, 'card=' + card + ' app=' + app);
+});
+
 console.log(fails === 0 ? '\nAll behaviours consistent across the three apps.' : '\n' + fails + ' check(s) failed.');
 process.exit(fails ? 1 : 0);
