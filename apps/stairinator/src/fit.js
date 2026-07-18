@@ -198,93 +198,15 @@
   }
 
   // ---------- Decoder (read HR + timestamps from an uploaded FIT) ----------
+  // The decoding itself lives in shared/fit — this app only needs the GPX-shaped
+  // point stream, so it goes through the shared adapter. Kept on Stair.fit so
+  // callers don't care where it came from.
   // Returns { points:[{timeMs, hr, lat:null, lon:null, ele:null}], hasHr, hasGps, hasTime, name }.
   function decode(arrayBuffer) {
-    var d = new DataView(arrayBuffer);
-    var bytes = new Uint8Array(arrayBuffer);
-    if (bytes.length < 14) throw new Error('File too small to be FIT.');
-    var headerSize = bytes[0];
-    if (!(bytes[8] === 0x2E && bytes[9] === 0x46 && bytes[10] === 0x49 && bytes[11] === 0x54)) {
-      throw new Error('Not a FIT file (missing .FIT signature).');
-    }
-    var dataSize = d.getUint32(4, true);
-    var pos = headerSize;
-    var end = Math.min(headerSize + dataSize, bytes.length - 2);
-    var defs = {}; // localType -> { global, littleEndian, fields:[{num,size,base}], devSize }
-    var lastTs = null; // FIT seconds, for compressed timestamps
-    var points = [];
-    var hasHr = false;
-
-    function readField(base, size, off, le) {
-      // Only the types we care about; otherwise return null.
-      if (size === 1) return bytes[off];
-      if (size === 2) return d.getUint16(off, le);
-      if (size === 4) return d.getUint32(off, le);
-      return null;
-    }
-
-    while (pos < end) {
-      var h = bytes[pos++];
-      if (h & 0x80) {
-        // Compressed-timestamp data message.
-        var localC = (h >> 5) & 0x03;
-        var offset = h & 0x1F;
-        var defC = defs[localC];
-        if (!defC) break; // cannot proceed without definition
-        var base = (lastTs == null ? 0 : lastTs);
-        var ts = (base & ~0x1F) + offset;
-        if (offset < (base & 0x1F)) ts += 0x20;
-        lastTs = ts;
-        pos = readDataMessage(defC, pos, ts);
-      } else if (h & 0x40) {
-        // Definition message.
-        var local = h & 0x0F;
-        pos++; // reserved
-        var arch = bytes[pos++];
-        var le = arch === 0;
-        var global = readField(UINT16, 2, pos, le); pos += 2;
-        var nFields = bytes[pos++];
-        var fields = [];
-        for (var i = 0; i < nFields; i++) {
-          fields.push({ num: bytes[pos], size: bytes[pos + 1], base: bytes[pos + 2] });
-          pos += 3;
-        }
-        var devSize = 0;
-        if (h & 0x20) { // developer fields present
-          var nDev = bytes[pos++];
-          for (var k = 0; k < nDev; k++) { devSize += bytes[pos + 1]; pos += 3; }
-        }
-        defs[local] = { global: global, le: le, fields: fields, devSize: devSize };
-      } else {
-        // Normal data message.
-        var localN = h & 0x0F;
-        var defN = defs[localN];
-        if (!defN) break;
-        pos = readDataMessage(defN, pos, null);
-      }
-    }
-
-    function readDataMessage(def, off, compressedTs) {
-      var ts = compressedTs, hr = null;
-      for (var i = 0; i < def.fields.length; i++) {
-        var f = def.fields[i];
-        var val = readField(f.base, f.size, off, def.le);
-        if (f.num === 253 && f.size === 4) { ts = val; lastTs = val; }
-        else if (def.global === 20 && f.num === 3 && f.size === 1) { hr = val; }
-        off += f.size;
-      }
-      off += def.devSize; // skip developer field bytes
-      if (def.global === 20 && ts != null) {
-        var hrVal = (hr != null && hr !== INV_U8) ? hr : null;
-        if (hrVal != null) hasHr = true;
-        points.push({ timeMs: fromFitSeconds(ts), hr: hrVal, lat: null, lon: null, ele: null });
-      }
-      return off;
-    }
-
-    if (!points.length) throw new Error('No record data found in this FIT file.');
-    points.sort(function (a, b) { return a.timeMs - b.timeMs; });
-    return { points: points, hasHr: hasHr, hasGps: false, hasTime: true, name: null };
+    // tolerant: a file that stops making sense partway through should still
+    // yield the heart rate it did record.
+    return window.FitAdapters.toPointStream(
+      window.FitDecode.decode(arrayBuffer, { nullifyInvalid: true, tolerant: true }));
   }
 
   Stair.fit = { encodeActivity: encodeActivity, decode: decode, toFitSeconds: toFitSeconds, fromFitSeconds: fromFitSeconds };

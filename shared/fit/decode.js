@@ -1,8 +1,22 @@
-/* FIT decoder — dependency-free, browser + node.
+/* FIT decoder — dependency-free, browser + node. Shared by all three apps.
  *
  * Preserves enough structure to re-encode byte-for-byte: the record stream is
  * kept in file order, values stay in raw (unscaled) integer form, and unknown
- * messages/fields survive untouched. Scaling belongs in the view layer.
+ * messages/fields survive untouched. Scaling and semantics belong in the view
+ * layer — see adapters.js.
+ *
+ * decode(bytes, options) where options are all opt-in and default to off:
+ *
+ *   nullifyInvalid  Map each base type's "no data" sentinel to null as it is
+ *                   read. MUST stay off for anything that re-encodes: the
+ *                   round-trip contract depends on sentinels surviving as
+ *                   literal integers.
+ *   tolerant        Stop cleanly at a malformed record rather than throwing,
+ *                   clamp an over-declared dataSize, and seed a leading
+ *                   compressed timestamp from 0 instead of rejecting it.
+ *
+ * With no options this behaves identically to the decoder it grew out of, so
+ * the byte-faithful rewrite path is unaffected.
  */
 (function (root) {
   'use strict';
@@ -57,11 +71,28 @@
     206: 'field_description', 207: 'developer_data_id'
   };
 
+  /* Accept a Uint8Array, an ArrayBuffer or a Node Buffer. The apps read files
+   * three different ways and shouldn't each need to know the difference. */
+  function toBytes(input) {
+    if (input instanceof Uint8Array) return input;
+    if (typeof ArrayBuffer !== 'undefined' && input instanceof ArrayBuffer) return new Uint8Array(input);
+    if (input && input.buffer instanceof ArrayBuffer) {
+      return new Uint8Array(input.buffer, input.byteOffset || 0, input.byteLength);
+    }
+    throw new Error('Expected a Uint8Array, ArrayBuffer or Buffer.');
+  }
+
   function DataView8(bytes) {
     return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   }
 
-  function readField(dv, off, baseTypeByte, size, littleEndian) {
+  // float32's "invalid" is the 0xFFFFFFFF bit pattern, which is a NaN — so it
+  // has to be spotted on the raw word before the float read.
+  function isInvalidFloat32(dv, off, littleEndian) {
+    return dv.getUint32(off, littleEndian) === 0xFFFFFFFF;
+  }
+
+  function readField(dv, off, baseTypeByte, size, littleEndian, nullifyInvalid) {
     var bt = baseTypeOf(baseTypeByte);
 
     if (bt.name === 'string') {
@@ -87,12 +118,16 @@
         case 'uint16': case 'uint16z': v = dv.getUint16(o, littleEndian); break;
         case 'sint32': v = dv.getInt32(o, littleEndian); break;
         case 'uint32': case 'uint32z': v = dv.getUint32(o, littleEndian); break;
-        case 'float32': v = dv.getFloat32(o, littleEndian); break;
+        case 'float32':
+          v = (nullifyInvalid && isInvalidFloat32(dv, o, littleEndian))
+            ? null : dv.getFloat32(o, littleEndian);
+          break;
         case 'float64': v = dv.getFloat64(o, littleEndian); break;
         case 'sint64': v = Number(dv.getBigInt64(o, littleEndian)); break;
         case 'uint64': case 'uint64z': v = Number(dv.getBigUint64(o, littleEndian)); break;
         default: v = dv.getUint8(o);
       }
+      if (nullifyInvalid && bt.invalid !== null && v === bt.invalid) v = null;
       vals.push(v);
     }
     return count === 1 ? vals[0] : vals;
@@ -103,10 +138,17 @@
    *     header:  {headerSize, protocolVersion, profileVersion, dataSize, headerCrc},
    *     records: [ {kind:'definition'|'data', ...} ]  // file order preserved
    *     messages:[ {global, name, fields:{num->value}, devFields:[], _record} ]
-   *     crc:     {stored, computed, valid}
+   *     byGlobal:{ globalNum -> [message] }           // index over messages
+   *     crc:     {stored, computed, valid},
+   *     trailingBytes: number                         // > 0 means a chained file
    *   }
    */
-  function decode(bytes) {
+  function decode(input, options) {
+    var opts = options || {};
+    var nullifyInvalid = !!opts.nullifyInvalid;
+    var tolerant = !!opts.tolerant;
+
+    var bytes = toBytes(input);
     if (bytes.length < 14) throw new Error('Too short to be a FIT file.');
 
     var dv = DataView8(bytes);
@@ -127,8 +169,11 @@
 
     var dataEnd = headerSize + header.dataSize;
     if (dataEnd > bytes.length) {
-      throw new Error('FIT header declares ' + header.dataSize +
-        ' bytes of data but the file only holds ' + (bytes.length - headerSize) + '.');
+      if (!tolerant) {
+        throw new Error('FIT header declares ' + header.dataSize +
+          ' bytes of data but the file only holds ' + (bytes.length - headerSize) + '.');
+      }
+      dataEnd = bytes.length;
     }
 
     var pos = headerSize;
@@ -136,6 +181,7 @@
     var records = [];
     var messages = [];
     var lastTimestamp = null;
+    var truncated = false;
 
     while (pos < dataEnd) {
       var recStart = pos;
@@ -146,8 +192,15 @@
         var cLocal = (h >> 5) & 0x03;
         var offset = h & 0x1F;
         var cDef = defs[cLocal];
-        if (!cDef) throw new Error('Data message references undefined local type ' + cLocal);
-        if (lastTimestamp == null) throw new Error('Compressed timestamp before any absolute timestamp.');
+        if (!cDef) {
+          if (tolerant) { truncated = true; break; }
+          throw new Error('Data message references undefined local type ' + cLocal);
+        }
+        if (lastTimestamp == null) {
+          if (!tolerant) throw new Error('Compressed timestamp before any absolute timestamp.');
+          lastTimestamp = 0;
+        }
+        if (tolerant && pos + defByteLength(cDef) > dataEnd) { truncated = true; break; }
 
         var ts = (lastTimestamp & ~0x1F) + offset;
         if (offset < (lastTimestamp & 0x1F)) ts += 0x20;
@@ -173,6 +226,7 @@
         var global = le ? dv.getUint16(pos, true) : dv.getUint16(pos, false);
         pos += 2;
         var nFields = bytes[pos++];
+        if (tolerant && pos + nFields * 3 > dataEnd) { truncated = true; break; }
 
         var fields = [];
         for (var f = 0; f < nFields; f++) {
@@ -183,6 +237,7 @@
         var devFields = [];
         if (h & 0x20) {
           var nDev = bytes[pos++];
+          if (tolerant && pos + nDev * 3 > dataEnd) { truncated = true; break; }
           for (var d = 0; d < nDev; d++) {
             devFields.push({ num: bytes[pos], size: bytes[pos + 1], devDataIndex: bytes[pos + 2] });
             pos += 3;
@@ -201,7 +256,11 @@
         // Standard data message.
         var local = h & 0x0F;
         var sDef = defs[local];
-        if (!sDef) throw new Error('Data message references undefined local type ' + local);
+        if (!sDef) {
+          if (tolerant) { truncated = true; break; }
+          throw new Error('Data message references undefined local type ' + local);
+        }
+        if (tolerant && pos + defByteLength(sDef) > dataEnd) { truncated = true; break; }
 
         var sMsg = readDataMessage(sDef, bytes, pos, dv);
         pos = sMsg.pos;
@@ -215,6 +274,12 @@
       }
     }
 
+    var byGlobal = {};
+    for (var m = 0; m < messages.length; m++) {
+      var g = messages[m].global;
+      (byGlobal[g] || (byGlobal[g] = [])).push(messages[m]);
+    }
+
     var storedCrc = bytes.length >= dataEnd + 2 ? (bytes[dataEnd] | (bytes[dataEnd + 1] << 8)) : null;
     var computedCrc = crcOver(bytes, 0, dataEnd);
 
@@ -222,15 +287,26 @@
       header: header,
       records: records,
       messages: messages,
+      byGlobal: byGlobal,
       crc: { stored: storedCrc, computed: computedCrc, valid: storedCrc === computedCrc },
-      trailingBytes: bytes.length - (dataEnd + 2) // chained FIT files would be > 0
+      trailingBytes: bytes.length - (dataEnd + 2), // chained FIT files would be > 0
+      truncated: truncated                          // tolerant mode stopped early
     };
+
+    // Bytes a data message of this definition occupies, so tolerant mode can
+    // tell a truncated tail from a decodable one before reading off the end.
+    function defByteLength(def) {
+      var n = 0, i;
+      for (i = 0; i < def.fields.length; i++) n += def.fields[i].size;
+      for (i = 0; i < def.devFields.length; i++) n += def.devFields[i].size;
+      return n;
+    }
 
     function readDataMessage(def, buf, p, view) {
       var out = { global: def.global, name: def.name, fields: {}, devFields: [], def: def };
       for (var i = 0; i < def.fields.length; i++) {
         var fd = def.fields[i];
-        out.fields[fd.num] = readField(view, p, fd.baseType, fd.size, def.littleEndian);
+        out.fields[fd.num] = readField(view, p, fd.baseType, fd.size, def.littleEndian, nullifyInvalid);
         p += fd.size;
       }
       for (var k = 0; k < def.devFields.length; k++) {
@@ -247,7 +323,9 @@
     }
   }
 
-  function isFit(bytes) {
+  function isFit(input) {
+    var bytes;
+    try { bytes = toBytes(input); } catch (e) { return false; }
     return bytes.length >= 12 &&
            String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]) === '.FIT';
   }
@@ -255,6 +333,7 @@
   var api = {
     decode: decode,
     isFit: isFit,
+    toBytes: toBytes,
     crc16: crc16,
     crcOver: crcOver,
     baseTypeOf: baseTypeOf,

@@ -20,7 +20,7 @@ is never uploaded anywhere.
 ```
 index.html          markup
 app.css             styling, light + dark
-js/fit-decode.js    FIT binary → message structure
+../../shared/fit/decode.js   FIT binary → message structure (shared)
 js/fit-encode.js    message structure → FIT binary
 js/swim-model.js    swim semantics: detection, corrections, recalculation
 js/chart.js         the per-length bar chart (hand-rolled SVG)

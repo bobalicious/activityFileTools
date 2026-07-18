@@ -8,7 +8,7 @@
   'use strict';
 
   var D = (typeof module !== 'undefined' && module.exports)
-    ? require('./fit-decode.js')
+    ? require('../../../shared/fit/decode.js')
     : root.FitDecode;
 
   function ByteSink() {

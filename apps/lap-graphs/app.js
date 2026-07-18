@@ -124,7 +124,10 @@
   function handleFile(buffer) {
     document.getElementById('error').hidden = true;
     try {
-      var act = window.parseFit(buffer);
+      // tolerant: this app opens whatever the user throws at it, so a malformed
+      // tail should still graph what parsed rather than failing the whole file.
+      var act = window.FitAdapters.toActivityModel(
+        window.FitDecode.decode(buffer, { nullifyInvalid: true, tolerant: true }));
       var avail = act.sport === 'swimming' ? G.SWIM_METRICS : G.RUN_METRICS;
       state.activity = act;
       state.laps = G.classifyRest(act, state.sensitivity);
