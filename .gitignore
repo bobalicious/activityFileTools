@@ -1,0 +1,21 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*~
+.idea/
+.vscode/
+
+# Node (the apps themselves have no deps; this is only if tooling is ever added)
+node_modules/
+
+# Linter/PMD cache
+.pmdCache
+
+# Release build output
+dist/
+
+# Real activity files used as dev fixtures — never commit personal data.
+# Nothing in the apps references these; they read whatever you open via the picker.
+*.fit
+apps/lap-graphs/samples/
+apps/swim-corrector/test-data/

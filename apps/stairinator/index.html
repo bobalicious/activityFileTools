@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stairinator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Back to the tool index. Inline styles: deliberately independent of this
+       app's stylesheet so the shared nav can't collide with app CSS. -->
+  <a href="../../index.html"
+     style="display:inline-block;padding:.5rem 1rem;font:14px/1 system-ui,sans-serif;color:inherit;opacity:.7;text-decoration:none">
+    ← All tools
+  </a>
+
+  <header class="app-header">
+    <h1>🪜 Stairinator</h1>
+    <p class="tagline">Turn a stair-machine workout into a FIT activity with altitude, distance &amp; cadence.</p>
+    <div class="header-actions">
+      <button id="btn-help" class="ghost">Help</button>
+      <button id="btn-export" class="ghost">Export all</button>
+      <button id="btn-import" class="ghost">Import</button>
+      <input id="file-import" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <!-- README viewer -->
+  <div id="readme-modal" class="modal hidden">
+    <div class="modal-backdrop" id="readme-backdrop"></div>
+    <div class="modal-panel" role="dialog" aria-label="Read me">
+      <button id="readme-close" class="modal-close" aria-label="Close">&times;</button>
+      <div id="readme-body" class="markdown"></div>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button id="tab-btn-machines" class="tab" data-tab="machines">Stair machines</button>
+    <button id="tab-btn-activity" class="tab" data-tab="activity">Activity</button>
+  </nav>
+
+  <main>
+    <!-- TAB: Machines -->
+    <section id="tab-machines" class="tab-panel">
+      <section id="sec-machines" class="card">
+        <h2><span class="step-num">1</span> Stair machines</h2>
+        <p class="hint">Define what each level means (steps per minute) and how big a step is. You can name each level.</p>
+        <div class="row">
+          <label>Machine to edit
+            <select id="machine-select" class="wide"></select>
+          </label>
+          <button id="btn-add-machine" class="secondary">+ Add machine</button>
+          <button id="btn-del-machine" class="ghost danger">Delete</button>
+        </div>
+        <div id="machine-editor"></div>
+      </section>
+    </section>
+
+    <!-- TAB: Activity -->
+    <section id="tab-activity" class="tab-panel">
+    <!-- 2. Activity plan -->
+    <section id="sec-plans" class="card">
+      <h2><span class="step-num">2</span> Activity plan</h2>
+      <p class="hint">Pick a machine and build your workout as a list of (level, minutes). Drag segments to reorder.</p>
+      <div class="row">
+        <label>Activity
+          <select id="plan-select" class="wide"></select>
+        </label>
+        <button id="btn-add-plan" class="secondary">+ New activity</button>
+        <button id="btn-del-plan" class="ghost danger">Delete</button>
+      </div>
+      <div id="plan-editor"></div>
+    </section>
+
+    <!-- 3. Align & preview -->
+    <section id="sec-align" class="card">
+      <h2><span class="step-num">3</span> Align &amp; preview</h2>
+      <p class="hint">Upload a GPX or FIT file with heart-rate data, then slide the plan to line it up. (Optional — without a file, a record is written every 5 seconds.)</p>
+      <div class="row">
+        <label class="file-drop" id="gpx-drop">
+          <input id="file-gpx" type="file" accept=".gpx,.fit,application/gpx+xml,application/xml,text/xml,application/octet-stream" hidden>
+          <span id="gpx-drop-label">Choose a GPX or FIT file or drag it here</span>
+        </label>
+      </div>
+      <div id="gpx-summary" class="summary hidden"></div>
+      <div id="align-area" class="hidden">
+        <div class="row align-controls">
+          <label class="inline">Plan curve
+            <select id="plan-kind">
+              <option value="rate" selected>Climb rate (m/s)</option>
+              <option value="altitude">Altitude (m)</option>
+              <option value="level">Level</option>
+            </select>
+          </label>
+          <label class="inline">Offset (s)
+            <input id="offset-input" type="number" step="1" value="0" style="width:6rem">
+          </label>
+          <span id="offset-readout" class="readout"></span>
+        </div>
+        <canvas id="chart" width="640" height="240"></canvas>
+        <p class="hint tiny">Drag the graph left/right, or type an offset. Blue = plan, red = heart rate. Shaded band = your workout window.</p>
+      </div>
+    </section>
+
+    <!-- 4. Generate -->
+    <section id="sec-generate" class="card">
+      <h2><span class="step-num">4</span> Generate &amp; download</h2>
+      <p class="hint">Produces a FIT activity with laps per segment, plus heart rate, cadence, distance and altitude.</p>
+      <div class="row">
+        <label>Activity Start Time
+          <input id="start-datetime" type="datetime-local" step="1">
+        </label>
+      </div>
+      <div id="generate-status" class="summary"></div>
+      <div class="row">
+        <button id="btn-gen-fit" class="primary" disabled>Download FIT file</button>
+      </div>
+    </section>
+    </section><!-- /tab-activity -->
+  </main>
+
+  <footer class="app-footer">
+    <span>Everything runs in your browser. Nothing is uploaded. Your machines &amp; plans are saved on this device. · <a href="#" id="footer-help">Read me</a></span>
+  </footer>
+
+  <!-- README text, rendered by the Help viewer. Embedded (not fetched) so it
+       works from file://. Kept in sync with README.md EXCEPT the Installation
+       section, which is intentionally omitted here (the app is already running). -->
+  <script type="text/markdown" id="readme-src">
+# Stairinator
+
+Turn a stair-machine workout into a **FIT activity file** with accurate altitude,
+distance, cadence and (optionally) your recorded heart rate — all in your browser,
+with nothing to install and no real location data.
+
+## Saving your work
+
+Your stair machines and activities are saved automatically in this browser, on this
+computer. Use **Export all** to back them up to a file, and **Import** to restore
+them (or move them to another computer or browser).
+
+## How to use it
+
+1. **Stair machines** — Describe your machine: the **riser** (how far up each step
+   takes you) and the **tread** (how far forward each step is), plus how many steps
+   per minute each level runs at. You can name each level. Climb rate and forward
+   rate are worked out for you.
+2. **Activity plan** — Pick a machine and list your workout as level-and-duration
+   (minutes and seconds) rows. Drag to reorder.
+3. **Align & preview** *(optional)* — Upload the **GPX or FIT** file from your
+   watch/app. If it has heart rate, slide the plan to line it up with the HR trace.
+4. **Generate & download** — Set the start date/time, then download a **FIT** file
+   containing one lap per plan segment, with timestamp, cadence, distance and
+   altitude on every record — plus heart rate if you uploaded a file that had it.
+
+## Why FIT (and not GPX)?
+
+Stair machines don't move you across the ground, so there's no location to record.
+GPX is really a *route* format and platforms like Strava will **overwrite** the
+elevation in a GPS track with their own terrain map — which would erase your climb.
+FIT is an *activity* format: it carries altitude/distance/cadence directly and
+marks the activity as a stair-climb (fitness-equipment / stair-climbing) so it's
+recognised correctly. Upload the `.fit` file to Strava, Garmin Connect, etc.
+
+### A note on Strava and elevation
+
+Getting Strava to show your climb needs **two** things, and the generated FIT does
+both automatically:
+
+1. **A trusted barometric device.** Strava only trusts elevation from a device with
+   a barometric altimeter, so the file identifies itself as a Garmin Fenix 6 (a
+   trusted device). This stops Strava replacing your climb with ground terrain.
+2. **A map.** Strava only *displays* elevation for activities that have GPS
+   coordinates, so the file includes a **tiny placeholder loop** (a few metres
+   across, at a meaningless location — not a real place you went). Without it,
+   Strava treats the activity as indoor and shows no elevation at all.
+
+If Strava still shows reduced elevation, open the activity on **strava.com** and
+remove the indoor tag.
+
+### Known limitation: Strava "Moving Time" shows 0
+
+A stair machine moves you forward very slowly, which is **below Strava's "moving"
+speed threshold**. Once a GPS track is present, Strava recomputes moving time from
+speed and counts the whole activity as "resting", so the summary shows **Moving
+Time 0:00**. Your **elapsed time** and **per-lap times** are correct; only the
+"Moving Time" summary is affected.
+
+## Records: heart rate vs. 5-second ticks
+
+- If your uploaded file **has heart rate**, one record is written per heart-rate
+  datapoint, aligned to the plan by the offset you set in step 3.
+- If you **don't** upload a file (or it has no heart rate), a record is written
+  **every 5 seconds** across the plan.
+
+## Trying it out
+
+`sample.gpx` is a short heart-rate-only recording (5 minutes) you can upload in
+step 3 to see the whole thing work.
+  </script>
+
+  <!-- classic scripts, dependency order; works from file:// (no modules/fetch) -->
+  <script src="src/model.js"></script>
+  <script src="src/storage.js"></script>
+  <script src="src/elevation.js"></script>
+  <script src="src/gpx.js"></script>
+  <script src="src/fit.js"></script>
+  <script src="src/align.js"></script>
+  <script src="src/chart.js"></script>
+  <script src="src/markdown.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

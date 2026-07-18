@@ -1,0 +1,112 @@
+/* Landing page only. Each app keeps its own stylesheet until the shared
+   design tokens land — see README.md, phase 4. */
+
+:root {
+  color-scheme: light dark;
+
+  --page: #f6f7f9;
+  --surface: #ffffff;
+  --text: #16191d;
+  --text-muted: #5c6672;
+  --border: #dfe3e8;
+  --accent: #1f6feb;
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 8px 24px rgb(16 24 40 / 6%);
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0f1216;
+    --surface: #171b21;
+    --text: #e7eaee;
+    --text-muted: #9aa4b1;
+    --border: #272d36;
+    --accent: #6ea8fe;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 28%);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 4rem 1.5rem;
+  background: var(--page);
+  color: var(--text);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.wrap {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 2.5rem;
+}
+
+h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.9rem;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.apps {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.app:hover,
+.app:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.app:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.app p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+footer {
+  margin-top: 3rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+footer code {
+  font-size: 0.95em;
+}
