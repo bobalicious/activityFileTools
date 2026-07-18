@@ -1,7 +1,12 @@
 # Activity File Tools
 
 Three browser-based tools for reading, graphing, correcting and building FIT and
-GPX activity files. No build, no server, no network — open `index.html` and go.
+GPX activity files. No build, no server, no network.
+
+**→ [bobalicious.github.io/activityFileTools](https://bobalicious.github.io/activityFileTools/)**
+
+Or clone it and open `index.html` directly — it runs the same from `file://`,
+and your files never leave the machine either way.
 
 | App | What it does |
 |---|---|
