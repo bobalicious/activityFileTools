@@ -328,5 +328,85 @@ if (sd.skipped) {
   check('panel is centred', sd.horizontallyCentred === true, JSON.stringify(sd));
 }
 
+
+// --- the swim export is never gated ------------------------------------------
+// Rebuilding the record stream changes the file even with no corrections, and a
+// swim with anomalies you chose not to act on is still one you may want out.
+
+function exportState(afterLoad) {
+  const fit = path.join(ROOT, 'apps/swim-corrector/test-data/750m_Breaststroke_Swolf_66.fit');
+  if (!fs.existsSync(fit)) return { skipped: true };
+  const b64 = fs.readFileSync(fit).toString('base64');
+  const drive = `
+<script>
+(function () {
+  var bin = atob('${b64}'), b = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+  var file = new File([b], 'swim.fit');
+  function report(o) {
+    var d = document.createElement('div'); d.id = '__exp';
+    d.textContent = JSON.stringify(o); document.body.appendChild(d);
+  }
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      var input = document.querySelector('#file-panel input[type=file]');
+      var dt = new DataTransfer(); dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      var w = 0;
+      (function settle() {
+        if (!document.querySelector('#exportBody button') && w < 7000) {
+          w += 100; return setTimeout(settle, 100);
+        }
+        ${afterLoad}
+        setTimeout(function () {
+          var btn = document.querySelector('#exportBody button');
+          report({
+            hasButton: !!btn,
+            label: btn ? btn.textContent : null,
+            disabled: btn ? btn.disabled : null,
+            outstanding: document.querySelectorAll('#issues .issue').length
+          });
+        }, 400);
+      })();
+    }, 300);
+  });
+})();
+</script>`;
+  const src = path.join(ROOT, 'apps/swim-corrector/index.html');
+  const tmp = path.join(path.dirname(src), '__export-' + path.basename(src));
+  if (path.resolve(tmp) === path.resolve(src)) throw new Error('refusing to overwrite ' + src);
+  fs.writeFileSync(tmp, fs.readFileSync(src, 'utf8').replace('</body>', drive + '</body>'));
+  let dom = '';
+  try {
+    dom = execFileSync(CHROME, ['--headless', '--disable-gpu', '--dump-dom',
+      '--virtual-time-budget=11000', 'file://' + tmp],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+  } catch (e) { dom = ''; }
+  fs.unlinkSync(tmp);
+  const m = dom.match(/<div id="__exp">([\s\S]*?)<\/div>/);
+  return m ? JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&')) : { hasButton: false };
+}
+
+console.log('\nswim export');
+const untouched = exportState('');
+if (untouched.skipped) {
+  console.log('  (no sample swim file present — skipped)');
+} else {
+  check('export offered with nothing corrected', untouched.hasButton, JSON.stringify(untouched));
+  check('export not blocked by outstanding anomalies', untouched.disabled === false,
+    'disabled=' + untouched.disabled + ' outstanding=' + untouched.outstanding);
+  check('the fixture really does have an unresolved anomaly',
+    untouched.outstanding > 0, 'outstanding=' + untouched.outstanding);
+  check('label reflects that no turn was corrected',
+    untouched.label === 'Download rebuilt .fit', untouched.label);
+
+  const noRebuild = exportState('document.querySelector("#exportBody input[type=checkbox]").click();');
+  check('export still offered with the rebuild turned off', noRebuild.disabled === false,
+    'disabled=' + noRebuild.disabled);
+  check('label drops to a plain download when nothing changes at all',
+    noRebuild.label === 'Download .fit', noRebuild.label);
+}
+
 console.log(fails === 0 ? '\nAll behaviours consistent across the three apps.' : '\n' + fails + ' check(s) failed.');
 process.exit(fails ? 1 : 0);

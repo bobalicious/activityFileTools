@@ -36,7 +36,10 @@ js/ui.js                    everything the user touches
    on the chart and listed with a confidence score.
 3. **Correct** them. A missed turn opens a slider to place the turn; a false turn
    merges two lengths into one. Any length can be edited, flagged or not.
-4. **Export** a corrected file, after a summary of every number that changes.
+4. **Export** a file, after a summary of every number that changes. Export is
+   never blocked: unresolved anomalies are left exactly as the watch recorded
+   them, and rebuilding the record stream changes the file even when no turn has
+   been corrected.
 
 To get it onto Strava: delete the old activity, then upload the corrected file.
 Strava cannot update an activity in place.

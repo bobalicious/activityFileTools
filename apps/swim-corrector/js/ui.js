@@ -606,16 +606,19 @@
 
     body.innerHTML = '';
 
+    // Export is always available. Correcting turns is not the only thing that
+    // changes the file — rebuilding the record stream does too — and a swim with
+    // anomalies you have chosen not to act on is still a swim you may want to
+    // export.
     if (!edited) {
       var p = document.createElement('p');
-      p.style.margin = '0';
-      p.style.color = 'var(--text-secondary)';
-      p.textContent = outstanding
-        ? 'Resolve or dismiss the ' + outstanding + ' outstanding ' +
-          (outstanding === 1 ? 'anomaly' : 'anomalies') + ' to build a corrected file.'
-        : 'Nothing has been changed, so there is nothing to export. The original file is already correct.';
+      p.style.cssText = 'margin:0 0 4px;color:var(--text-secondary)';
+      p.textContent = state.densify
+        ? 'No turns have been corrected. The record stream is still rebuilt below, ' +
+          'so the exported file will differ from your original.'
+        : 'No turns have been corrected and the record stream is not being rebuilt, ' +
+          'so the exported file will match your original.';
       body.appendChild(p);
-      return;
     }
 
     var rows = [
@@ -652,6 +655,21 @@
     });
     table.appendChild(tb);
     body.appendChild(table);
+
+    if (outstanding) {
+      var unresolved = document.createElement('div');
+      unresolved.className = 'caution';
+      unresolved.innerHTML =
+        '<span class="caution-icon" aria-hidden="true">&#9888;</span>' +
+        '<div><strong></strong><span></span></div>';
+      unresolved.querySelector('strong').textContent = outstanding === 1
+        ? 'One anomaly is still flagged'
+        : outstanding + ' anomalies are still flagged';
+      unresolved.querySelector('span:last-child').textContent =
+        'You can export anyway — anything you have not corrected is left exactly as your ' +
+        'watch recorded it. Dismiss an anomaly to stop it being flagged.';
+      body.appendChild(unresolved);
+    }
 
     if (d.after.calories !== d.before.calories) {
       var note = document.createElement('p');
@@ -697,19 +715,13 @@
     btnRow.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:16px';
     var dl = document.createElement('button');
     dl.className = 'primary';
-    dl.textContent = 'Download corrected .fit';
-    dl.disabled = outstanding > 0;
+    // Say what the file actually is. Calling it "corrected" when no turn was
+    // corrected would be a lie, and the filename follows the same rule.
+    dl.textContent = edited ? 'Download corrected .fit'
+                   : state.densify ? 'Download rebuilt .fit'
+                   : 'Download .fit';
     dl.addEventListener('click', download);
     btnRow.appendChild(dl);
-
-    if (outstanding) {
-      var warn = document.createElement('span');
-      warn.className = 'confidence';
-      warn.textContent = outstanding +
-        (outstanding === 1 ? ' anomaly still outstanding — resolve or dismiss it first.'
-                           : ' anomalies still outstanding — resolve or dismiss them first.');
-      btnRow.appendChild(warn);
-    }
 
     // Read before the download, not after: this is the moment a file gets
     // written and the original gets deleted from Strava.
@@ -742,11 +754,13 @@
 
   function download() {
     var m = state.model;
+    // Read this before apply(), which rewrites the model in place.
+    var suffix = S.corrections(m) ? '-corrected' : state.densify ? '-rebuilt' : '-export';
     var bytes;
     try {
       bytes = E.encode(S.apply(m, { densifyRecords: state.densify }));
     } catch (err) {
-      showError('Could not build the corrected file.', err.message);
+      showError('Could not build the file.', err.message);
       return;
     }
 
@@ -756,7 +770,9 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = state.fileName.replace(/\.fit$/i, '') + '-corrected.fit';
+    // Matches the button: a file with no corrections in it should not arrive
+    // named "-corrected".
+    a.download = state.fileName.replace(/\.fit$/i, '') + suffix + '.fit';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
