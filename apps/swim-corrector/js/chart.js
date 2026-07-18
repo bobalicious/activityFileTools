@@ -54,10 +54,10 @@
 
   var FILL = {
     rest: 'var(--rest)',
-    missed: 'var(--critical)',
+    missed: 'var(--danger)',
     'false': 'var(--warning)',
-    corrected: 'var(--series-1)',
-    normal: 'var(--series-1)'
+    corrected: 'var(--accent)',
+    normal: 'var(--accent)'
   };
 
   function render(svg, model, issues, opts) {
@@ -187,10 +187,10 @@
   }
 
   var LEGEND = [
-    { key: 'normal', label: 'Length', swatch: 'var(--series-1)' },
-    { key: 'missed', label: '▲ Suspected missed turn', swatch: 'var(--critical)' },
+    { key: 'normal', label: 'Length', swatch: 'var(--accent)' },
+    { key: 'missed', label: '▲ Suspected missed turn', swatch: 'var(--danger)' },
     { key: 'false', label: '▲ Suspected false turn', swatch: 'var(--warning)' },
-    { key: 'corrected', label: '✓ Corrected', swatch: 'var(--series-1)' },
+    { key: 'corrected', label: '✓ Corrected', swatch: 'var(--accent)' },
     { key: 'rest', label: 'Rest', swatch: 'var(--rest)' }
   ];
 

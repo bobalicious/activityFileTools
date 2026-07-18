@@ -5,8 +5,9 @@
   window.Stair = window.Stair || {};
 
   var PAD = { top: 16, right: 54, bottom: 28, left: 46 };
-  var HR_COLOR = '#e5484d';
-  var PLAN_COLOR = '#2f6feb';
+  // Series colours are shared with the other tools — see shared/ui/chart-theme.js.
+  var HR_COLOR = window.ChartTheme.SERIES.heartRate;
+  var PLAN_COLOR = window.ChartTheme.SERIES.plan;
   var WINDOW_FILL = 'rgba(47,111,235,0.08)';
 
   function create(canvas, callbacks) {
@@ -77,7 +78,7 @@
       ctx.strokeRect(PAD.left, PAD.top, plotW, plotH);
 
       // X ticks every ~1/6 of the span.
-      ctx.fillStyle = getComputedStyle(canvas).color || '#888';
+      ctx.fillStyle = window.ChartTheme.resolve().muted;
       ctx.font = '11px system-ui, sans-serif';
       ctx.textAlign = 'center';
       for (var k = 0; k <= 6; k++) {

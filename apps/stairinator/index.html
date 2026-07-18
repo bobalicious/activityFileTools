@@ -4,15 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stairinator</title>
+  <link rel="stylesheet" href="../../shared/ui/tokens.css">
+  <link rel="stylesheet" href="../../shared/ui/components.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Back to the tool index. Inline styles: deliberately independent of this
-       app's stylesheet so the shared nav can't collide with app CSS. -->
-  <a href="../../index.html"
-     style="display:inline-block;padding:.5rem 1rem;font:14px/1 system-ui,sans-serif;color:inherit;opacity:.7;text-decoration:none">
-    ← All tools
-  </a>
+  <a class="app-nav" href="../../index.html">← All tools</a>
 
   <header class="app-header">
     <h1>🪜 Stairinator</h1>
@@ -77,7 +74,7 @@
       <h2><span class="step-num">3</span> Align &amp; preview</h2>
       <p class="hint">Upload a GPX or FIT file with heart-rate data, then slide the plan to line it up. (Optional — without a file, a record is written every 5 seconds.)</p>
       <div class="row">
-        <label class="file-drop" id="gpx-drop">
+        <label class="filedrop" id="gpx-drop">
           <input id="file-gpx" type="file" accept=".gpx,.fit,application/gpx+xml,application/xml,text/xml,application/octet-stream" hidden>
           <span id="gpx-drop-label">Choose a GPX or FIT file or drag it here</span>
         </label>
@@ -204,6 +201,8 @@ step 3 to see the whole thing work.
   <script src="../../shared/fit/adapters.js"></script>
   <script src="../../shared/fit/encode.js"></script>
   <script src="../../shared/gpx/parse.js"></script>
+  <script src="../../shared/ui/chart-theme.js"></script>
+  <script src="../../shared/ui/chart-theme.js"></script>
   <script src="src/model.js"></script>
   <script src="src/storage.js"></script>
   <script src="src/elevation.js"></script>

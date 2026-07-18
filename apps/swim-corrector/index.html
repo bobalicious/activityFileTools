@@ -4,26 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swim FIT Corrector</title>
+<link rel="stylesheet" href="../../shared/ui/tokens.css">
+<link rel="stylesheet" href="../../shared/ui/components.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 
-<!-- Back to the tool index. Inline styles: deliberately independent of this
-     app's stylesheet so the shared nav can't collide with app CSS. -->
-<a href="../../index.html"
-   style="display:inline-block;padding:.5rem 1rem;font:14px/1 system-ui,sans-serif;color:inherit;opacity:.7;text-decoration:none">
-  ← All tools
-</a>
+<a class="app-nav" href="../../index.html">← All tools</a>
 
 <header class="topbar">
   <div class="logo">
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path d="M1 13.5c1.8 0 1.8 1.6 3.6 1.6s1.8-1.6 3.6-1.6 1.8 1.6 3.6 1.6 1.8-1.6 3.6-1.6 1.8 1.6 3.6 1.6"
-            stroke="var(--series-1)" stroke-width="1.6" stroke-linecap="round"/>
+            stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/>
       <path d="M1 17c1.8 0 1.8 1.6 3.6 1.6S6.4 17 8.2 17s1.8 1.6 3.6 1.6S13.6 17 15.4 17s1.8 1.6 3.6 1.6"
-            stroke="var(--series-1)" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
-      <circle cx="13.5" cy="4.2" r="2.2" fill="var(--series-1)"/>
-      <path d="M4 10.2 8.8 7l4 2.2" stroke="var(--series-1)" stroke-width="1.6"
+            stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
+      <circle cx="13.5" cy="4.2" r="2.2" fill="var(--accent)"/>
+      <path d="M4 10.2 8.8 7l4 2.2" stroke="var(--accent)" stroke-width="1.6"
             stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     <h1>Swim FIT Corrector</h1>
@@ -44,8 +41,8 @@
 
   <!-- Landing -->
   <section id="landing">
-    <div class="dropzone" id="dropzone">
-      <h2>Open a pool swim FIT file</h2>
+    <div class="filedrop" id="dropzone">
+      <h2><span class="step-num">1</span>Open a pool swim FIT file</h2>
       <p>Fix lengths where your watch missed a turn — or saw one that never happened.</p>
       <button class="primary" id="pickBtn">Choose a .fit file</button>
       <p class="hint">
@@ -72,7 +69,7 @@
 
     <div class="panel">
       <div class="panel-head">
-        <h2 class="grow">Time per length</h2>
+        <h2 class="grow"><span class="step-num">2</span>Review the lengths</h2>
         <div class="control-row">
           <label for="sens">
             Sensitivity
@@ -90,7 +87,7 @@
 
     <div class="panel">
       <div class="panel-head">
-        <h2 class="grow">Anomalies</h2>
+        <h2 class="grow"><span class="step-num">3</span>Correct the turns</h2>
         <span class="confidence" id="issueCount"></span>
       </div>
       <div id="issues"></div>
@@ -107,7 +104,7 @@
     </div>
 
     <div class="panel" id="exportPanel">
-      <div class="panel-head"><h2 class="grow">Export</h2></div>
+      <div class="panel-head"><h2 class="grow"><span class="step-num">4</span>Export</h2></div>
       <div class="panel-body" id="exportBody"></div>
     </div>
 

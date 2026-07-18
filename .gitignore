@@ -19,3 +19,6 @@ dist/
 *.fit
 apps/lap-graphs/samples/
 apps/swim-corrector/test-data/
+
+# Scratch preview pages used for visual checks
+__*.html

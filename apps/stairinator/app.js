@@ -531,8 +531,8 @@
     // file upload + drag/drop
     var drop = $('#gpx-drop');
     $('#file-gpx').addEventListener('change', function (e) { if (e.target.files[0]) handleActivityFile(e.target.files[0]); });
-    ['dragover', 'dragenter'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('drag'); }); });
-    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('drag'); }); });
+    ['dragover', 'dragenter'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('filedrop--active'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('filedrop--active'); }); });
     drop.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) handleActivityFile(e.dataTransfer.files[0]); });
 
     // align controls

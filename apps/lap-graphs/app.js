@@ -31,6 +31,7 @@
   var app = document.getElementById('app');
   app.innerHTML =
     '<header><h1>bd-licious graphs</h1><p class="tagline">Drop a <code>.fit</code> file to graph your interval session.</p></header>' +
+    '<h2 class="step"><span class="step-num">1</span>Open a file</h2>' +
     '<div id="drop" class="filedrop" role="button" tabindex="0"><p>Drop a <strong>.fit</strong> file here, or click to choose</p></div>' +
     '<input id="file" type="file" accept=".fit" hidden>' +
     '<p id="error" class="error" hidden></p>' +
@@ -67,8 +68,9 @@
     var html = '<section class="summary"><strong>' + (a.sport || 'Activity') + '</strong> · ' +
       a.startTime.toLocaleDateString() + ' · ' + state.laps.length + ' laps · ' + restCount + ' rest · ' +
       (a.totalDistance ? (a.totalDistance / 1000).toFixed(2) + ' km' : '—') + '</section>';
+    html += '<h2 class="step"><span class="step-num">2</span>Choose what to graph</h2>';
     html += state.rows.map(metricCard).join('');
-    html += '<div class="chart-actions"><button data-k="addRow" data-i="0">+ Add metric</button></div>';
+    html += '<div class="chart-actions"><button class="primary" data-k="addRow" data-i="0">+ Add metric</button></div>';
 
     // config bar
     html += '<div class="config-bar"><input id="cfgName" type="text" placeholder="Configuration name" value="' + escAttr(state.configName) + '">' +
@@ -89,9 +91,10 @@
     }
 
     // chart + y-slider
+    html += '<h2 class="step"><span class="step-num">3</span>Your graph</h2>';
     html += '<div class="chart-row"><div class="y-axis-slider"><input class="y-slider" type="range" min="0" max="0.9" step="0.01" value="' + state.yStart + '" data-k="yStart" data-i="0"><span class="y-slider-label">' + Math.round(state.yStart * 100) + '%</span></div>' +
       '<div class="chart-col" id="chart-wrap"></div></div>' +
-      '<div class="chart-actions"><button data-k="download" data-i="0">Download PNG</button></div>';
+      '<div class="chart-actions"><button class="primary" data-k="download" data-i="0">Download PNG</button></div>';
 
     // lap table
     html += '<table class="laptable"><thead><tr><th>#</th><th>Time</th><th>Dist</th><th>Rest?</th></tr></thead><tbody>' +

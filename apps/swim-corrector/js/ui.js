@@ -35,12 +35,12 @@
 
   ['dragenter', 'dragover'].forEach(function (ev) {
     dropzone.addEventListener(ev, function (e) {
-      e.preventDefault(); dropzone.classList.add('over');
+      e.preventDefault(); dropzone.classList.add('filedrop--active');
     });
   });
   ['dragleave', 'drop'].forEach(function (ev) {
     dropzone.addEventListener(ev, function (e) {
-      e.preventDefault(); dropzone.classList.remove('over');
+      e.preventDefault(); dropzone.classList.remove('filedrop--active');
     });
   });
   dropzone.addEventListener('drop', function (e) {

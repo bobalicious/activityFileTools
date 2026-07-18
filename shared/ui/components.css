@@ -1,0 +1,199 @@
+/* Shared components — the interaction language common to all three tools.
+ *
+ * Anything a user touches that appears in more than one app is defined here
+ * once: buttons, the file drop zone, the numbered step badge, cards, status
+ * messages and the chart frame. Apps add their own layout on top but should not
+ * restyle these.
+ *
+ * Link order is tokens.css, then this, then the app's own stylesheet.
+ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ---- back to the tool index ------------------------------------------- */
+
+.app-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.app-nav:hover { color: var(--accent); }
+
+/* ---- buttons ----------------------------------------------------------- */
+
+button {
+  font: inherit;
+  font-size: 0.9375rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms, color 120ms, opacity 120ms;
+}
+button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-ink);
+  filter: brightness(1.08);
+}
+
+button.ghost { background: transparent; }
+button.secondary { background: var(--surface-2); }
+button.small { padding: 0.35rem 0.7rem; font-size: 0.875rem; }
+button.danger { color: var(--danger); }
+button.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+
+/* ---- file drop --------------------------------------------------------- */
+/* One upload control everywhere. Clicking it opens the picker; dragging a file
+   over it adds .filedrop--active. */
+
+.filedrop {
+  display: block;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 3rem 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms, color 150ms;
+}
+.filedrop:hover,
+.filedrop--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.filedrop:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.filedrop p { margin: 0; }
+/* The drop zone is centred, so a numbered heading inside it must be too. */
+.filedrop h2:has(> .step-num) { justify-content: center; }
+.filedrop strong, .filedrop code { color: var(--text); }
+.filedrop--active strong, .filedrop--active code { color: inherit; }
+
+/* ---- numbered steps ---------------------------------------------------- */
+/* Every app walks the user through an ordered sequence; the badge makes that
+   sequence visible and is numbered the same way in all three. */
+
+.step {
+  display: flex;
+  align-items: center;
+  margin: 2rem 0 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+/* Headings carry the badge inline; :has aligns it properly where supported and
+   the vertical-align is the fallback everywhere else. */
+h1:has(> .step-num), h2:has(> .step-num), h3:has(> .step-num) {
+  display: flex;
+  align-items: center;
+}
+
+.step-num {
+  vertical-align: -0.15em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ---- cards ------------------------------------------------------------- */
+
+.card {
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.card h2 {
+  display: flex;
+  align-items: center;
+  margin: 0 0 0.5rem;
+  font-size: 1.0625rem;
+}
+
+/* ---- status and messages ----------------------------------------------- */
+
+.tagline { margin: 0; color: var(--text-muted); font-size: 0.9375rem; }
+.hint { margin: 0 0 0.875rem; color: var(--text-muted); font-size: 0.9375rem; }
+.hint.tiny { font-size: 0.8125rem; }
+
+.status { margin-top: 1rem; color: var(--text-muted); }
+
+.error {
+  margin-top: 1rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: rgba(208, 59, 59, 0.08);
+  color: var(--danger);
+}
+
+.summary {
+  margin-top: 1.25rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 0.875rem;
+}
+
+.badge {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+}
+
+.hidden { display: none !important; }
+
+/* ---- charts ------------------------------------------------------------ */
+/* The frame only. What's drawn inside comes from shared/ui/chart-theme.js so
+   that SVG, canvas and exported PNGs all agree. */
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}

@@ -1,0 +1,115 @@
+/* Shared design tokens — the one place colour, spacing and type are decided.
+ *
+ * Each app links this first, then its own stylesheet, which overrides exactly
+ * one thing: the accent. Everything else is deliberately identical across the
+ * suite so the three tools read as one product.
+ *
+ *   :root { --accent: #fc4c02; --accent-rgb: 252, 76, 2; }
+ *
+ * --accent-rgb carries the same colour as raw channels so translucent tints can
+ * be derived from it; keep the two in step.
+ *
+ * Dark mode follows the system by default, and either theme can be forced by
+ * setting data-theme="light" or "dark" on the root element (the swim corrector
+ * has a toggle that does this).
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Surfaces, back to front */
+  --page: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+
+  /* Text, most to least prominent */
+  --text: #16191d;
+  --text-secondary: #4a5561;
+  --text-muted: #6b7684;
+
+  /* Lines */
+  --border: #dde2e8;
+  --gridline: #e7ebf0;
+  --baseline: #c3c9d1;
+
+  /* Accent — the one token an app is expected to override */
+  --accent: #2f6feb;
+  --accent-rgb: 47, 111, 235;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(var(--accent-rgb), 0.08);
+
+  /* Status */
+  --good: #1f9d4d;
+  --good-text: #127036;
+  --warning: #d98324;
+  --danger: #d03b3b;
+  --rest: #9aa4b1;
+
+  /* Shape */
+  --radius: 10px;
+  --radius-sm: 7px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 3px rgba(20, 30, 50, 0.08), 0 6px 20px rgba(20, 30, 50, 0.05);
+
+  /* Type */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Dark: follow the system, unless the page has forced light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0f1216;
+    --surface: #1a1f26;
+    --surface-2: #232932;
+
+    --text: #e7eaee;
+    --text-secondary: #b3bcc7;
+    --text-muted: #8e99a6;
+
+    --border: #2c333d;
+    --gridline: #262c35;
+    --baseline: #3a424d;
+
+    --accent-soft: rgba(var(--accent-rgb), 0.14);
+
+    --good: #35b863;
+    --good-text: #4cc97a;
+    --warning: #e0a03f;
+    --danger: #e05c5c;
+    --rest: #5c6672;
+
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Dark forced regardless of the system setting. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --page: #0f1216;
+  --surface: #1a1f26;
+  --surface-2: #232932;
+
+  --text: #e7eaee;
+  --text-secondary: #b3bcc7;
+  --text-muted: #8e99a6;
+
+  --border: #2c333d;
+  --gridline: #262c35;
+  --baseline: #3a424d;
+
+  --accent-soft: rgba(var(--accent-rgb), 0.14);
+
+  --good: #35b863;
+  --good-text: #4cc97a;
+  --warning: #e0a03f;
+  --danger: #e05c5c;
+  --rest: #5c6672;
+
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}

@@ -21,6 +21,9 @@ shared/
   fit/encode.js     message structure → FIT binary, plus the write primitives
   fit/adapters.js   views over a decoded file (activity model, point stream)
   gpx/parse.js      GPX → point stream (read-only)
+  ui/tokens.css     colour, spacing and type — the whole palette
+  ui/components.css buttons, file drop, step badges, cards, messages
+  ui/chart-theme.js chart palette, matched to tokens.css
 docs/               FIT format reference
 test/run.js         regression tests — node test/run.js
 apps/
@@ -43,7 +46,7 @@ stays verifiable.
       under `apps/`, landing page added. No app code merged.
 - [x] **Phase 2 — merge the FIT decoder.** Three decoders became one.
 - [x] **Phase 3 — encoders and GPX.** Byte-level writing shared; GPX moved.
-- [ ] **Phase 4 — shared CSS design tokens.**
+- [x] **Phase 4 — one interaction language.** Shared tokens and components.
 
 ### Phase 2 — how the decoders were merged
 
@@ -89,6 +92,30 @@ that it isn't stairinator's.
 
 Verified the same way: the synthesised file is byte-for-byte what it was before
 the refactor, pinned in the tests by a SHA-256 so it can't drift silently.
+
+### Phase 4 — one interaction language
+
+The three apps had drifted into three vocabularies for the same ideas —
+`--ink`/`--text-primary`/`--fg` for the same colour, three different upload
+controls, `button` rules that agreed on everything except a pixel of radius.
+That is now one set of tokens and one set of components, and the apps keep only
+their layout.
+
+**An app overrides exactly one thing: its accent.** Strava orange in the
+grapher, blue in the other two. `tokens.css` deliberately does *not* set
+`--accent` in its dark blocks — those selectors carry higher specificity than a
+plain `:root`, so an app setting its accent normally would be silently
+overridden in dark mode. The app owns that colour in both themes.
+
+Unified deliberately, per the brief:
+
+- **One upload control.** The grapher's drop zone (`.filedrop`) everywhere,
+  replacing stairinator's `.file-drop` and the corrector's `.dropzone`.
+- **Numbered steps on every page.** All three walk the user through an ordered
+  sequence, and now all three show it.
+- **One chart palette.** `chart-theme.js` holds it, because the charts can't
+  just read CSS: two of them bake colours into exported images. It has to be
+  kept in step with `tokens.css` by hand.
 
 ### Known loose ends
 

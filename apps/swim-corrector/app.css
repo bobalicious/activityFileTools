@@ -1,75 +1,27 @@
-/* Swim FIT Corrector — all styling. No external fonts or stylesheets. */
+/* Layout and app-specific pieces only. Palette, buttons, the file drop, step
+   badges, cards and status messages come from shared/ui/. */
 
 :root {
-  color-scheme: light;
-  --surface-1: #fcfcfb;
-  --page: #f9f9f7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --baseline: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.10);
-  --series-1: #2a78d6;
+  --accent: #2a78d6;
+  --accent-rgb: 42, 120, 214;
   --series-1-dim: #9ec5f4;
-  --good: #0ca30c;
-  --good-text: #006300;
-  --warning: #fab219;
-  --critical: #d03b3b;
-  --rest: #c3c2b7;
-  --shadow: 0 1px 2px rgba(11, 11, 11, 0.06), 0 4px 12px rgba(11, 11, 11, 0.04);
-  --radius: 10px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --surface-1: #1a1a19;
-    --page: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --baseline: #383835;
-    --border: rgba(255, 255, 255, 0.10);
-    --series-1: #3987e5;
+    --accent: #3987e5;
+    --accent-rgb: 57, 135, 229;
     --series-1-dim: #1c5cab;
-    --good: #0ca30c;
-    --good-text: #0ca30c;
-    --rest: #52514e;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 }
 
 :root[data-theme="dark"] {
-  color-scheme: dark;
-  --surface-1: #1a1a19;
-  --page: #0d0d0d;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --baseline: #383835;
-  --border: rgba(255, 255, 255, 0.10);
-  --series-1: #3987e5;
+  --accent: #3987e5;
+  --accent-rgb: 57, 135, 229;
   --series-1-dim: #1c5cab;
-  --good: #0ca30c;
-  --good-text: #0ca30c;
-  --rest: #52514e;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--page);
-  color: var(--text-primary);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
+body { font-size: 14px; -webkit-font-smoothing: antialiased; }
 
 h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
 h1 { font-size: 17px; }
@@ -101,15 +53,15 @@ h3 { font-size: 13px; }
 button {
   font: inherit; cursor: pointer; border-radius: 8px;
   border: 1px solid var(--border);
-  background: var(--surface-1); color: var(--text-primary);
+  background: var(--surface); color: var(--text);
   padding: 7px 13px; transition: background 120ms, border-color 120ms, opacity 120ms;
 }
 button:hover:not(:disabled) { border-color: var(--text-muted); }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
-button:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 button.primary {
-  background: var(--series-1); border-color: var(--series-1); color: #fff;
+  background: var(--accent); border-color: var(--accent); color: #fff;
   font-weight: 550;
 }
 button.primary:hover:not(:disabled) { filter: brightness(1.08); }
@@ -123,7 +75,7 @@ button.icon {
 /* ---- Panels ---- */
 
 .panel {
-  background: var(--surface-1);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -138,23 +90,16 @@ button.icon {
 
 /* ---- Drop zone ---- */
 
-.dropzone {
-  margin-top: 48px; padding: 56px 24px; text-align: center;
-  border: 2px dashed var(--baseline); border-radius: 14px;
-  background: var(--surface-1);
-  transition: border-color 140ms, background 140ms;
-}
-.dropzone.over { border-color: var(--series-1); background: color-mix(in srgb, var(--series-1) 6%, var(--surface-1)); }
-.dropzone h2 { margin-bottom: 6px; }
-.dropzone p { color: var(--text-secondary); margin: 0 0 20px; }
-.dropzone .hint { font-size: 12px; color: var(--text-muted); margin: 16px 0 0; }
+.filedrop h2 { margin: 0 0 6px; color: var(--text); }
+.filedrop p { margin: 0 0 20px; }
+.filedrop .hint { margin: 16px 0 0; font-size: 12px; }
 
 /* ---- Error ---- */
 
 .error {
   margin-top: 16px; padding: 14px 16px; border-radius: var(--radius);
-  border: 1px solid color-mix(in srgb, var(--critical) 40%, transparent);
-  background: color-mix(in srgb, var(--critical) 8%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
   display: flex; gap: 11px; align-items: flex-start;
 }
 .error strong { display: block; }
@@ -164,7 +109,7 @@ button.icon {
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 1px;
   background: var(--border); border-radius: var(--radius); overflow: hidden; }
-.stat { background: var(--surface-1); padding: 13px 15px; }
+.stat { background: var(--surface); padding: 13px 15px; }
 .stat .label {
   font-size: 11px; color: var(--text-muted); text-transform: uppercase;
   letter-spacing: 0.05em; font-weight: 600;
@@ -189,7 +134,7 @@ button.icon {
 .chart .bar { cursor: pointer; }
 .chart .bar rect { transition: opacity 100ms; }
 .chart .bar:hover rect.fill { opacity: 0.8; }
-.chart .bar.selected rect.hit { stroke: var(--text-primary); stroke-width: 2; fill: none; rx: 4; }
+.chart .bar.selected rect.hit { stroke: var(--text); stroke-width: 2; fill: none; rx: 4; }
 .chart .edit-underline { fill: var(--good-text); }
 .chart .flag { font-size: 11px; }
 
@@ -201,7 +146,7 @@ button.icon {
 
 .tooltip {
   position: fixed; z-index: 60; pointer-events: none;
-  background: var(--surface-1); color: var(--text-primary);
+  background: var(--surface); color: var(--text);
   border: 1px solid var(--border); border-radius: 8px;
   box-shadow: var(--shadow); padding: 8px 10px; font-size: 12px;
   min-width: 130px; opacity: 0; transition: opacity 90ms;
@@ -209,7 +154,7 @@ button.icon {
 .tooltip.show { opacity: 1; }
 .tooltip .t-title { font-weight: 600; margin-bottom: 4px; }
 .tooltip .t-row { display: flex; justify-content: space-between; gap: 14px; color: var(--text-secondary); }
-.tooltip .t-row b { color: var(--text-primary); font-weight: 550; font-variant-numeric: tabular-nums; }
+.tooltip .t-row b { color: var(--text); font-weight: 550; font-variant-numeric: tabular-nums; }
 .tooltip .t-note { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 
 /* ---- Issue list ---- */
@@ -223,7 +168,7 @@ button.icon {
   flex: none; width: 22px; height: 22px; border-radius: 50%;
   display: grid; place-items: center; font-size: 12px; margin-top: 1px;
 }
-.issue .badge.missed { background: color-mix(in srgb, var(--critical) 18%, transparent); color: var(--critical); }
+.issue .badge.missed { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
 .issue .badge.false { background: color-mix(in srgb, var(--warning) 26%, transparent); color: #8a5d00; }
 .issue .badge.done { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good-text); }
 :root[data-theme="dark"] .issue .badge.false { color: #f5c869; }
@@ -245,7 +190,7 @@ button.icon {
 /* ---- Sensitivity control ---- */
 
 .control-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-secondary); }
-.control-row input[type=range] { width: 120px; accent-color: var(--series-1); }
+.control-row input[type=range] { width: 120px; accent-color: var(--accent); }
 .control-row label { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
 
 /* ---- Split editor ---- */
@@ -255,7 +200,7 @@ button.icon {
   display: grid; place-items: center; padding: 20px;
 }
 .modal {
-  background: var(--surface-1); border-radius: 14px; box-shadow: var(--shadow);
+  background: var(--surface); border-radius: 14px; box-shadow: var(--shadow);
   border: 1px solid var(--border);
   width: min(660px, 100%); max-height: 90vh; overflow: auto;
 }
@@ -275,10 +220,10 @@ button.icon {
 .split-half {
   height: 100%; display: grid; place-items: center;
   font-size: 12px; font-weight: 600; color: #fff;
-  background: var(--series-1); transition: width 60ms linear;
+  background: var(--accent); transition: width 60ms linear;
 }
-.split-half.b { background: var(--series-1-dim); color: var(--text-primary); }
-.split-slider { width: 100%; margin: 12px 0 0; accent-color: var(--series-1); display: block; }
+.split-half.b { background: var(--series-1-dim); color: var(--text); }
+.split-slider { width: 100%; margin: 12px 0 0; accent-color: var(--accent); display: block; }
 .split-readout {
   display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;
 }
@@ -292,7 +237,7 @@ button.icon {
 .stroke-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 13px; }
 .stroke-row input[type=number] {
   width: 62px; font: inherit; padding: 5px 7px; border-radius: 6px;
-  border: 1px solid var(--border); background: var(--page); color: var(--text-primary);
+  border: 1px solid var(--border); background: var(--page); color: var(--text);
 }
 .note {
   margin-top: 14px; padding: 10px 12px; border-radius: 8px;
@@ -314,8 +259,8 @@ button.icon {
 
 .callout {
   display: flex; gap: 10px; padding: 12px 14px; border-radius: 8px;
-  background: color-mix(in srgb, var(--series-1) 7%, var(--surface-1));
-  border: 1px solid color-mix(in srgb, var(--series-1) 26%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
   font-size: 13px; margin-top: 14px;
 }
 .callout ol { margin: 6px 0 0; padding-left: 18px; }
@@ -331,7 +276,7 @@ button.icon {
 .table-wrap { overflow-x: auto; }
 table.lengths { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.lengths th {
-  position: sticky; top: 0; background: var(--surface-1); text-align: right;
+  position: sticky; top: 0; background: var(--surface); text-align: right;
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--text-muted); font-weight: 600; padding: 8px 10px; white-space: nowrap;
   border-bottom: 1px solid var(--border);
@@ -342,15 +287,15 @@ table.lengths td {
   padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--border);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-table.lengths tr:hover td { background: color-mix(in srgb, var(--series-1) 5%, transparent); }
+table.lengths tr:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
 table.lengths tr.rest td { color: var(--text-muted); font-style: italic; }
-table.lengths tr.flagged td { background: color-mix(in srgb, var(--critical) 7%, transparent); }
+table.lengths tr.flagged td { background: color-mix(in srgb, var(--danger) 7%, transparent); }
 table.lengths tr.edited td { background: color-mix(in srgb, var(--good) 6%, transparent); }
 .tag {
   display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
   padding: 1px 6px; border-radius: 20px; font-weight: 600;
 }
-.tag.missed { background: color-mix(in srgb, var(--critical) 16%, transparent); color: var(--critical); }
+.tag.missed { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
 .tag.false { background: color-mix(in srgb, var(--warning) 26%, transparent); color: #8a5d00; }
 .tag.done { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good-text); }
 .tag.rest { background: var(--gridline); color: var(--text-secondary); }
