@@ -12,8 +12,10 @@
   <a class="app-nav" href="../../index.html">← All tools</a>
 
   <header class="app-header">
-    <h1>🪜 Stairinator</h1>
-    <p class="tagline">Turn a stair-machine workout into a FIT activity with altitude, distance &amp; cadence.</p>
+    <div class="app-header-text">
+      <h1>🪜 Stairinator</h1>
+      <p class="tagline">Turn a stair-machine workout into a FIT activity with altitude, distance &amp; cadence.</p>
+    </div>
     <div class="header-actions">
       <button id="btn-help" class="ghost">Help</button>
       <button id="btn-export" class="ghost">Export all</button>
@@ -21,15 +23,6 @@
       <input id="file-import" type="file" accept="application/json,.json" hidden>
     </div>
   </header>
-
-  <!-- README viewer -->
-  <div id="readme-modal" class="modal hidden">
-    <div class="modal-backdrop" id="readme-backdrop"></div>
-    <div class="modal-panel" role="dialog" aria-label="Read me">
-      <button id="readme-close" class="modal-close" aria-label="Close">&times;</button>
-      <div id="readme-body" class="markdown"></div>
-    </div>
-  </div>
 
   <nav class="tabs">
     <button id="tab-btn-machines" class="tab" data-tab="machines">Stair machines</button>
@@ -73,12 +66,7 @@
     <section id="sec-align" class="card">
       <h2><span class="step-num">3</span> Align &amp; preview</h2>
       <p class="hint">Upload a GPX or FIT file with heart-rate data, then slide the plan to line it up. (Optional — without a file, a record is written every 5 seconds.)</p>
-      <div class="row">
-        <label class="filedrop" id="gpx-drop">
-          <input id="file-gpx" type="file" accept=".gpx,.fit,application/gpx+xml,application/xml,text/xml,application/octet-stream" hidden>
-          <span id="gpx-drop-label">Choose a GPX or FIT file or drag it here</span>
-        </label>
-      </div>
+      <div id="file-panel"></div>
       <div id="gpx-summary" class="summary hidden"></div>
       <div id="align-area" class="hidden">
         <div class="row align-controls">
@@ -123,7 +111,7 @@
   <!-- README text, rendered by the Help viewer. Embedded (not fetched) so it
        works from file://. Kept in sync with README.md EXCEPT the Installation
        section, which is intentionally omitted here (the app is already running). -->
-  <script type="text/markdown" id="readme-src">
+  <script type="text/markdown" id="help-src">
 # Stairinator
 
 Turn a stair-machine workout into a **FIT activity file** with accurate altitude,
@@ -202,14 +190,15 @@ step 3 to see the whole thing work.
   <script src="../../shared/fit/encode.js"></script>
   <script src="../../shared/gpx/parse.js"></script>
   <script src="../../shared/ui/chart-theme.js"></script>
-  <script src="../../shared/ui/chart-theme.js"></script>
+  <script src="../../shared/ui/filepanel.js"></script>
+  <script src="../../shared/ui/markdown.js"></script>
+  <script src="../../shared/ui/help.js"></script>
   <script src="src/model.js"></script>
   <script src="src/storage.js"></script>
   <script src="src/elevation.js"></script>
   <script src="src/fit.js"></script>
   <script src="src/align.js"></script>
   <script src="src/chart.js"></script>
-  <script src="src/markdown.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

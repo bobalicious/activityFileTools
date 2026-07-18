@@ -12,10 +12,59 @@
     <a class="app-nav" href="../../index.html">← All tools</a>
 
     <main class="app" id="app"></main>
+
+    <!-- Help text, rendered by the Help modal. Embedded rather than fetched so
+         it works from file://. Kept in step with README.md by hand. -->
+    <script type="text/markdown" id="help-src">
+# bd-licious graphs
+
+Load a FIT file and chart it — pace, cadence, stride and heart rate for runs,
+per-length pace, time, strokes and SWOLF for pool swims.
+
+## How to use it
+
+1. **Open a file** — drop a `.fit` file on the panel, or click to choose one.
+   The file is read entirely in this page and never uploaded.
+2. **Choose what to graph** — pick a metric and a graph type. Add more metric
+   rows to overlay several at once; each row can have its own colour, or stay
+   **Linked** to the shared colour for that metric.
+3. **Your graph** — adjust the y-axis start with the vertical slider, then
+   **Download PNG** to save the image.
+
+## Graph types
+
+- **Line** — one point per lap, joined.
+- **Bar** — one bar per lap, with optional value labels.
+- **Range** — a bar from each lap's minimum to its maximum.
+- **Trace** — the underlying per-second samples rather than lap averages,
+  smoothed by the amount you choose.
+
+## Rest detection
+
+Laps that look like recovery are detected automatically and can be shaded on
+the chart. The **Rest sensitivity** slider moves the threshold. Moving it
+re-classifies every lap, which discards any rest flags you set by hand.
+
+## Saved configurations
+
+Give a set of metric rows a name and **Save config** to keep it. Saved configs
+and your HR zone boundaries persist in this browser; the loaded file and the
+graph theme do not.
+
+## Graph theme
+
+**Graph theme** controls the colours of the chart itself and of the exported
+PNG — light or dark. It is independent of the page, which follows your
+operating system's appearance setting.
+    </script>
+
     <!-- No build, no server: plain classic scripts that run from file:// -->
     <script src="../../shared/fit/decode.js"></script>
     <script src="../../shared/fit/adapters.js"></script>
     <script src="../../shared/ui/chart-theme.js"></script>
+    <script src="../../shared/ui/filepanel.js"></script>
+    <script src="../../shared/ui/markdown.js"></script>
+    <script src="../../shared/ui/help.js"></script>
     <script src="graph.js"></script>
     <script src="app.js"></script>
   </body>

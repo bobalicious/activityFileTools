@@ -3,6 +3,7 @@
   'use strict';
   var model = Stair.model, storage = Stair.storage, elevation = Stair.elevation;
   var gpxLib = window.GpxParse, align = Stair.align;
+  var filePanel = null;
 
   // ---- state ----
   var doc = model.normalizeDoc(storage.load());
@@ -468,6 +469,9 @@
   // ================= file upload (GPX or FIT) =================
   function handleActivityFile(file) {
     var reader = new FileReader();
+    reader.onerror = function () {
+      filePanel.showError('Could not read that file.', 'The browser refused to open it.');
+    };
     reader.onload = function () {
       try {
         var bytes = new Uint8Array(reader.result);
@@ -479,14 +483,23 @@
         }
         state.offsetSec = 0;
         $('#offset-input').value = 0;
-        $('#gpx-drop-label').textContent = file.name;
+        filePanel.clearError();
+        filePanel.setLoaded(file.name, fileDetail(state.parsed));
       } catch (err) {
-        state.parsed = null;
-        alert('Could not read file: ' + err.message);
+        // Leave any previously loaded file in place — a bad second file should
+        // not cost you the good one you already had.
+        filePanel.showError('Could not read that file.', err.message);
       }
       renderGpxSummary(); renderGenerate(); renderAlign();
     };
     reader.readAsArrayBuffer(file);
+  }
+
+  function fileDetail(parsed) {
+    if (!parsed || !parsed.points.length) return '';
+    var mins = (parsed.points[parsed.points.length - 1].timeMs - parsed.points[0].timeMs) / 60000;
+    return parsed.points.length + ' points · ' + fmt(mins, 1) + ' min' +
+      (parsed.hasHr ? ' · heart rate' : ' · no heart rate');
   }
 
   // ================= wiring =================
@@ -528,12 +541,21 @@
       }
     });
 
-    // file upload + drag/drop
-    var drop = $('#gpx-drop');
-    $('#file-gpx').addEventListener('change', function (e) { if (e.target.files[0]) handleActivityFile(e.target.files[0]); });
-    ['dragover', 'dragenter'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('filedrop--active'); }); });
-    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('filedrop--active'); }); });
-    drop.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) handleActivityFile(e.dataTransfer.files[0]); });
+    // file upload — the panel owns the picker, drag/drop and error display
+    filePanel = window.FilePanel.create({
+      mount: $('#file-panel'),
+      accept: '.gpx,.fit,application/gpx+xml,application/xml,text/xml,application/octet-stream',
+      prompt: 'Drop a <strong>GPX</strong> or <strong>FIT</strong> file here, or click to choose',
+      onFile: handleActivityFile,
+      onClear: function () {
+        state.parsed = null;
+        state.offsetSec = 0;
+        $('#offset-input').value = 0;
+        filePanel.clearError();
+        filePanel.setEmpty();
+        renderGpxSummary(); renderGenerate(); renderAlign();
+      }
+    });
 
     // align controls
     $('#plan-kind').addEventListener('change', function (e) { state.planKind = e.target.value; drawChart(); });
@@ -542,22 +564,11 @@
     // generate
     $('#btn-gen-fit').addEventListener('click', doGenerateFit);
 
-    // README viewer (renders the embedded markdown; works from file://)
-    var readmeRendered = false;
-    function openReadme() {
-      if (!readmeRendered) {
-        var src = $('#readme-src');
-        $('#readme-body').innerHTML = Stair.markdown.render(src ? src.textContent : 'README unavailable.');
-        readmeRendered = true;
-      }
-      $('#readme-modal').classList.remove('hidden');
-    }
-    function closeReadme() { $('#readme-modal').classList.add('hidden'); }
-    $('#btn-help').addEventListener('click', openReadme);
-    $('#footer-help').addEventListener('click', function (e) { e.preventDefault(); openReadme(); });
-    $('#readme-close').addEventListener('click', closeReadme);
-    $('#readme-backdrop').addEventListener('click', closeReadme);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeReadme(); });
+    window.Help.install({
+      trigger: $('#btn-help'),
+      extraTriggers: [$('#footer-help')],
+      label: 'Stairinator help'
+    });
 
     // export / import (import button looks like export, drives the hidden input)
     $('#btn-export').addEventListener('click', function () { download(storage.exportBlob(doc), 'stairinator-data.json'); });

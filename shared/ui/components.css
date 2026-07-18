@@ -32,6 +32,20 @@ body {
 }
 .app-nav:hover { color: var(--accent); }
 
+/* ---- app header -------------------------------------------------------- */
+/* Title and tagline on the left, actions on the right, in every tool. */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.app-header-text { flex: 1 1 auto; min-width: 0; }
+.app-header h1 { margin: 0; font-size: 1.5rem; }
+.header-actions { display: flex; gap: 0.5rem; flex: none; }
+
 /* ---- buttons ----------------------------------------------------------- */
 
 button {
@@ -96,6 +110,42 @@ button.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--d
 .filedrop strong, .filedrop code { color: var(--text); }
 .filedrop--active strong, .filedrop--active code { color: inherit; }
 
+/* ---- file panel -------------------------------------------------------- */
+/* The panel stays visible once a file is open — it shrinks to this bar rather
+   than disappearing, so opening a different file is always one click away. */
+
+.filepanel-loaded {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  transition: border-color 150ms, background 150ms;
+}
+.filepanel-loaded--active { border-color: var(--accent); background: var(--accent-soft); }
+
+.filepanel-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.filepanel-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filepanel-detail { color: var(--text-muted); font-size: 0.875rem; }
+.filepanel-actions { display: flex; gap: 0.5rem; flex: none; }
+
+.filepanel-error:empty { display: none; }
+
 /* ---- numbered steps ---------------------------------------------------- */
 /* Every app walks the user through an ordered sequence; the badge makes that
    sequence visible and is numbered the same way in all three. */
@@ -156,14 +206,24 @@ h1:has(> .step-num), h2:has(> .step-num), h3:has(> .step-num) {
 
 .status { margin-top: 1rem; color: var(--text-muted); }
 
+/* A failure says what went wrong (strong) and why or what to do about it
+   (muted). Both apps that only managed the first half were the harder ones to
+   recover from. */
 .error {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
   margin-top: 1rem;
-  padding: 0.6rem 0.9rem;
+  padding: 0.75rem 0.9rem;
   border: 1px solid var(--danger);
   border-radius: var(--radius-sm);
   background: rgba(208, 59, 59, 0.08);
-  color: var(--danger);
+  color: var(--text);
 }
+.error > div { display: flex; flex-direction: column; gap: 0.15rem; }
+.error strong { color: var(--danger); }
+.error span:not(.error-icon) { color: var(--text-secondary); font-size: 0.9375rem; }
+.error-icon { color: var(--danger); flex: none; line-height: 1.5; }
 
 .summary {
   margin-top: 1.25rem;
@@ -196,4 +256,34 @@ h1:has(> .step-num), h2:has(> .step-num), h3:has(> .step-num) {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
+}
+
+/* ---- help modal -------------------------------------------------------- */
+
+.modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
+.modal.hidden { display: none; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(10, 15, 25, 0.55); }
+.modal-panel {
+  position: relative; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+  max-width: 760px; width: calc(100% - 32px); max-height: calc(100vh - 64px);
+  overflow: auto; padding: 24px 28px;
+}
+.modal-close {
+  position: absolute; top: 10px; right: 12px; border: none; background: transparent;
+  font-size: 24px; line-height: 1; color: var(--text-muted); cursor: pointer; padding: 4px 8px;
+}
+.modal-close:hover { color: var(--text); }
+
+.markdown { line-height: 1.6; }
+.markdown h1 { font-size: 24px; margin: 0 0 12px; }
+.markdown h2 { font-size: 19px; margin: 22px 0 8px; border-top: 1px solid var(--border); padding-top: 16px; }
+.markdown h3 { font-size: 16px; margin: 18px 0 6px; }
+.markdown p { margin: 0 0 12px; }
+.markdown ul, .markdown ol { margin: 0 0 12px; padding-left: 22px; }
+.markdown li { margin: 4px 0; }
+.markdown a { color: var(--accent); }
+.markdown code {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 5px; font-size: 0.9em; font-family: var(--font-mono);
 }

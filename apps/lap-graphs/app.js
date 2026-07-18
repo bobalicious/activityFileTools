@@ -30,11 +30,15 @@
   // ---- rendering ----------------------------------------------------------
   var app = document.getElementById('app');
   app.innerHTML =
-    '<header><h1>bd-licious graphs</h1><p class="tagline">Drop a <code>.fit</code> file to graph your interval session.</p></header>' +
+    '<header class="app-header">' +
+      '<div class="app-header-text">' +
+        '<h1>bd-licious graphs</h1>' +
+        '<p class="tagline">Drop a <code>.fit</code> file to graph your interval session.</p>' +
+      '</div>' +
+      '<div class="header-actions"><button id="btn-help" class="ghost">Help</button></div>' +
+    '</header>' +
     '<h2 class="step"><span class="step-num">1</span>Open a file</h2>' +
-    '<div id="drop" class="filedrop" role="button" tabindex="0"><p>Drop a <strong>.fit</strong> file here, or click to choose</p></div>' +
-    '<input id="file" type="file" accept=".fit" hidden>' +
-    '<p id="error" class="error" hidden></p>' +
+    '<div id="file-panel"></div>' +
     '<div id="body"></div>';
 
   function btn(active, k, i, v, label, disabled) {
@@ -63,12 +67,8 @@
   function renderBody() {
     var body = document.getElementById('body');
     if (!state.activity) { body.innerHTML = ''; return; }
-    var a = state.activity, restCount = state.laps.filter(function (l) { return l.isRest; }).length;
     var hasHr = state.rows.some(function (r) { return r.metric === 'heartRate'; });
-    var html = '<section class="summary"><strong>' + (a.sport || 'Activity') + '</strong> · ' +
-      a.startTime.toLocaleDateString() + ' · ' + state.laps.length + ' laps · ' + restCount + ' rest · ' +
-      (a.totalDistance ? (a.totalDistance / 1000).toFixed(2) + ' km' : '—') + '</section>';
-    html += '<h2 class="step"><span class="step-num">2</span>Choose what to graph</h2>';
+    var html = '<h2 class="step"><span class="step-num">2</span>Choose what to graph</h2>';
     html += state.rows.map(metricCard).join('');
     html += '<div class="chart-actions"><button class="primary" data-k="addRow" data-i="0">+ Add metric</button></div>';
 
@@ -122,36 +122,77 @@
 
   // ---- state mutations ----------------------------------------------------
   function updateRow(i, patch) { state.rows[i] = Object.assign({}, state.rows[i], patch); }
-  function reclassify() { if (state.activity) state.laps = G.classifyRest(state.activity, state.sensitivity); }
+  function reclassify() {
+    if (!state.activity) return;
+    state.laps = G.classifyRest(state.activity, state.sensitivity);
+    // The panel's summary carries the rest count, which just changed.
+    if (loadedName) panel.setLoaded(loadedName, summaryOf(state.activity));
+  }
 
-  function handleFile(buffer) {
-    document.getElementById('error').hidden = true;
+  var loadedName = '';
+
+  function handleFile(buffer, name) {
+    panel.clearError();
     try {
       // tolerant: this app opens whatever the user throws at it, so a malformed
       // tail should still graph what parsed rather than failing the whole file.
       var act = window.FitAdapters.toActivityModel(
         window.FitDecode.decode(buffer, { nullifyInvalid: true, tolerant: true }));
       var avail = act.sport === 'swimming' ? G.SWIM_METRICS : G.RUN_METRICS;
+      var dropped = !state.rows.every(function (r) { return avail.indexOf(r.metric) >= 0; });
       state.activity = act;
       state.laps = G.classifyRest(act, state.sensitivity);
-      if (!state.rows.every(function (r) { return avail.indexOf(r.metric) >= 0; })) {
+      if (dropped) {
         var r = newRow('bar'); r.metric = avail[0]; state.rows = [r];
       }
+      loadedName = name;
+      panel.setLoaded(name, summaryOf(act));
       renderBody();
+      // Say so rather than silently discarding the user's metric choices.
+      if (dropped) {
+        panel.showError('Metrics reset for this sport.',
+          'The metrics you had chosen do not apply to a ' + (act.sport || 'file of this type') + '.');
+      }
     } catch (e) {
-      var err = document.getElementById('error'); err.hidden = false; err.textContent = 'Couldn’t read that file: ' + (e && e.message || e);
-      state.activity = null; renderBody();
+      // Keep whatever is already graphed — losing a good file because the next
+      // one was bad is worse than the failure itself.
+      panel.showError('Could not read that file.', (e && e.message) || String(e));
     }
   }
 
+  // The file panel carries the activity summary, so there is no separate
+  // summary row repeating it underneath.
+  function summaryOf(act) {
+    var restCount = state.laps.filter(function (l) { return l.isRest; }).length;
+    var parts = [
+      act.sport || 'activity',
+      act.startTime.toLocaleDateString(),
+      state.laps.length + ' laps',
+      restCount + ' rest'
+    ];
+    if (act.totalDistance) parts.push((act.totalDistance / 1000).toFixed(2) + ' km');
+    return parts.join(' · ');
+  }
+
   // ---- events -------------------------------------------------------------
-  var drop = document.getElementById('drop'), fileInput = document.getElementById('file');
-  function readFile(f) { if (!f) return; f.arrayBuffer().then(handleFile); }
-  drop.addEventListener('click', function () { fileInput.click(); });
-  drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('filedrop--active'); });
-  drop.addEventListener('dragleave', function () { drop.classList.remove('filedrop--active'); });
-  drop.addEventListener('drop', function (e) { e.preventDefault(); drop.classList.remove('filedrop--active'); readFile(e.dataTransfer.files[0]); });
-  fileInput.addEventListener('change', function (e) { readFile(e.target.files[0]); });
+  var panel = window.FilePanel.create({
+    mount: document.getElementById('file-panel'),
+    accept: '.fit',
+    prompt: 'Drop a <strong>.fit</strong> file here, or click to choose',
+    onFile: function (f) {
+      f.arrayBuffer().then(function (buf) { handleFile(buf, f.name); }, function (err) {
+        panel.showError('Could not read that file.',
+          (err && err.message) || 'The browser refused to open it.');
+      });
+    },
+    onClear: function () {
+      state.activity = null;
+      loadedName = '';
+      panel.clearError();
+      panel.setEmpty();
+      renderBody();
+    }
+  });
 
   app.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-k]'); if (!b) return;
@@ -240,6 +281,8 @@
     img.onerror = function () { URL.revokeObjectURL(url); };
     img.src = url;
   }
+
+  window.Help.install({ trigger: document.getElementById('btn-help'), label: 'bd-licious graphs help' });
 
   function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function escAttr(s) { return escHtml(s).replace(/"/g, '&quot;'); }

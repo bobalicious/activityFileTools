@@ -12,63 +12,30 @@
 
   var $ = function (id) { return document.getElementById(id); };
 
-  /* ---- Theme ---- */
-
-  var savedTheme = null;
-  try { savedTheme = localStorage.getItem('swimfit-theme'); } catch (e) { /* file:// */ }
-  if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
-
-  $('themeBtn').addEventListener('click', function () {
-    var cur = document.documentElement.getAttribute('data-theme');
-    var isDark = cur ? cur === 'dark'
-      : window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var next = isDark ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    try { localStorage.setItem('swimfit-theme', next); } catch (e) { /* file:// */ }
-    if (state.model) draw();
-  });
-
   /* ---- File loading ---- */
 
-  var dropzone = $('dropzone');
-  var fileInput = $('fileInput');
-
-  ['dragenter', 'dragover'].forEach(function (ev) {
-    dropzone.addEventListener(ev, function (e) {
-      e.preventDefault(); dropzone.classList.add('filedrop--active');
-    });
+  // The panel owns the picker, drag/drop, the filename and error display. It
+  // stays on screen once a file is open, shrinking to a compact bar.
+  var filePanel = window.FilePanel.create({
+    mount: $('file-panel'),
+    accept: '.fit,application/octet-stream',
+    prompt: 'Drop a pool-swim <strong>.fit</strong> file here, or click to choose',
+    onFile: readFile,
+    onClear: reset
   });
-  ['dragleave', 'drop'].forEach(function (ev) {
-    dropzone.addEventListener(ev, function (e) {
-      e.preventDefault(); dropzone.classList.remove('filedrop--active');
-    });
-  });
-  dropzone.addEventListener('drop', function (e) {
-    if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
-  });
-  dropzone.addEventListener('click', function (e) {
-    if (e.target.tagName !== 'BUTTON') fileInput.click();
-  });
-  $('pickBtn').addEventListener('click', function () { fileInput.click(); });
-  $('openBtn').addEventListener('click', function () { fileInput.click(); });
-  fileInput.addEventListener('change', function () {
-    if (fileInput.files[0]) readFile(fileInput.files[0]);
-    fileInput.value = '';
-  });
-  $('closeBtn').addEventListener('click', reset);
 
   function readFile(file) {
     state.fileName = file.name;
     var fr = new FileReader();
     fr.onerror = function () {
-      showError('Could not read that file.', 'The browser refused to open it.');
+      filePanel.showError('Could not read that file.', 'The browser refused to open it.');
     };
     fr.onload = function () {
       try {
         loadBytes(new Uint8Array(fr.result));
       } catch (err) {
-        if (err instanceof S.SwimLoadError) showError(err.message, err.detail);
-        else showError('That file could not be read as a FIT file.', err.message);
+        if (err instanceof S.SwimLoadError) filePanel.showError(err.message, err.detail);
+        else filePanel.showError('That file could not be read as a FIT file.', err.message);
       }
     };
     fr.readAsArrayBuffer(file);
@@ -88,32 +55,31 @@
     }
     state.model = S.load(decoded);
     state.selected = null;
-    $('loadError').innerHTML = '';
-    $('landing').hidden = true;
+    filePanel.clearError();
+    filePanel.setLoaded(state.fileName, fileDetail(state.model));
     $('activity').hidden = false;
-    $('closeBtn').hidden = false;
-    $('fileName').textContent = state.fileName;
     draw();
+  }
+
+  function fileDetail(m) {
+    var n = m.lengths.length;
+    return n + (n === 1 ? ' length' : ' lengths') + ' · ' + m.poolLengthM + ' m pool';
   }
 
   function reset() {
     state.model = null;
     state.fileName = '';
-    $('landing').hidden = false;
+    state.selected = null;
     $('activity').hidden = true;
-    $('closeBtn').hidden = true;
-    $('fileName').textContent = '';
-    $('loadError').innerHTML = '';
+    filePanel.clearError();
+    filePanel.setEmpty();
   }
 
+  // Kept so code outside the load path reports failures the same way — the
+  // export error used to be written into an element that was hidden whenever a
+  // file was open, so nobody ever saw it.
   function showError(title, detail) {
-    $('loadError').innerHTML = '';
-    var d = document.createElement('div');
-    d.className = 'error';
-    d.innerHTML = '<span aria-hidden="true">⚠</span><div><strong></strong><span></span></div>';
-    d.querySelector('strong').textContent = title;
-    d.querySelector('span:last-child').textContent = detail || '';
-    $('loadError').appendChild(d);
+    filePanel.showError(title, detail);
   }
 
   /* ---- Sensitivity ---- */
@@ -762,5 +728,7 @@
   }
 
   window.addEventListener('resize', function () { if (state.model) drawChart(); });
+
+  window.Help.install({ trigger: $('btn-help'), label: 'Swim FIT Corrector help' });
 
 })();

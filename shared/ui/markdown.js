@@ -1,9 +1,13 @@
-// markdown.js — a tiny Markdown → HTML renderer supporting only the subset used
-// by our README: h1–h3, paragraphs, bold, italic, inline code, links, and
-// ordered / unordered lists (with wrapped continuation lines).
-(function () {
+/* A tiny Markdown → HTML renderer, supporting only the subset the app READMEs
+ * use: h1-h3, paragraphs, bold, italic, inline code, links, and ordered /
+ * unordered lists (with wrapped continuation lines).
+ *
+ * Shared so every tool can show its own README in-app. The text has to be
+ * embedded in the page rather than fetched, because the apps run from file://
+ * where fetch is blocked.
+ */
+(function (root) {
   'use strict';
-  window.Stair = window.Stair || {};
 
   function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -54,5 +58,9 @@
     return html.join('\n');
   }
 
-  Stair.markdown = { render: render };
-})();
+  var api = { render: render };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Markdown = api;
+
+})(typeof self !== 'undefined' ? self : this);

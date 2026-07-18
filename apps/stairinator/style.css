@@ -93,31 +93,3 @@ table.levels input { width: 4.5rem; text-align: center; padding: 4px; }
 .app-footer { text-align: center; color: var(--text-muted); font-size: 12px; padding: 16px; }
 .app-footer a { color: var(--accent); }
 
-/* README modal */
-.modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
-.modal.hidden { display: none; }
-.modal-backdrop { position: absolute; inset: 0; background: rgba(10, 15, 25, 0.55); }
-.modal-panel {
-  position: relative; background: var(--surface); color: var(--text);
-  border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
-  max-width: 760px; width: calc(100% - 32px); max-height: calc(100vh - 64px);
-  overflow: auto; padding: 24px 28px;
-}
-.modal-close {
-  position: absolute; top: 10px; right: 12px; border: none; background: transparent;
-  font-size: 24px; line-height: 1; color: var(--text-muted); cursor: pointer; padding: 4px 8px;
-}
-.modal-close:hover { color: var(--text); }
-
-.markdown { line-height: 1.6; }
-.markdown h1 { font-size: 24px; margin: 0 0 12px; }
-.markdown h2 { font-size: 19px; margin: 22px 0 8px; border-top: 1px solid var(--border); padding-top: 16px; }
-.markdown h3 { font-size: 16px; margin: 18px 0 6px; }
-.markdown p { margin: 0 0 12px; }
-.markdown ul, .markdown ol { margin: 0 0 12px; padding-left: 22px; }
-.markdown li { margin: 4px 0; }
-.markdown a { color: var(--accent); }
-.markdown code {
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px;
-  padding: 1px 5px; font-size: 0.9em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}

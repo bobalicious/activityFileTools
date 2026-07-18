@@ -22,7 +22,10 @@ shared/
   fit/adapters.js   views over a decoded file (activity model, point stream)
   gpx/parse.js      GPX → point stream (read-only)
   ui/tokens.css     colour, spacing and type — the whole palette
-  ui/components.css buttons, file drop, step badges, cards, messages
+  ui/components.css buttons, file panel, step badges, cards, messages
+  ui/filepanel.js   opening a file: picker, drag/drop, filename, errors
+  ui/help.js        the help modal
+  ui/markdown.js    the tiny renderer behind it
   ui/chart-theme.js chart palette, matched to tokens.css
 docs/               FIT format reference
 test/run.js         regression tests — node test/run.js
@@ -47,6 +50,8 @@ stays verifiable.
 - [x] **Phase 2 — merge the FIT decoder.** Three decoders became one.
 - [x] **Phase 3 — encoders and GPX.** Byte-level writing shared; GPX moved.
 - [x] **Phase 4 — one interaction language.** Shared tokens and components.
+- [x] **Phase 5 — one set of behaviours.** The apps now *act* alike, not just
+      look alike.
 
 ### Phase 2 — how the decoders were merged
 
@@ -117,6 +122,46 @@ Unified deliberately, per the brief:
   just read CSS: two of them bake colours into exported images. It has to be
   kept in step with `tokens.css` by hand.
 
+### Phase 5 — one set of behaviours
+
+Looking alike is not the same as behaving alike. An audit of all three found
+they had each invented their own answer to the same questions:
+
+| | was | now |
+|---|---|---|
+| Panel after a file loads | unchanged / unchanged / **vanished** | shrinks to a compact bar |
+| Filename | in the drop label / **nowhere** / topbar | in the bar |
+| Change or close the file | none / none / topbar button | in the bar |
+| Failures | **`alert()`** / raw message / title + detail | title + detail, inline |
+| Help | modal / none / none | modal in all three |
+| Theme | OS / OS / **toggle** | OS everywhere |
+| Keyboard file open | ✗ / focusable but **inert** / via inner button | works |
+
+`shared/ui/filepanel.js` owns the whole file interaction, which is what stops
+this drifting again. The panel is deliberately never hidden — a loaded file
+shrinks it rather than replacing it with a button somewhere else.
+
+The error region sits *outside* the swappable part of the panel on purpose.
+That is what fixed the export bug below: an app that hides its drop zone has
+nowhere to put a failure that happens later.
+
+**Bugs the audit turned up, all fixed:**
+
+- The corrector wrote export errors into an element inside its landing section,
+  which was hidden whenever a file was open — so a failed export silently did
+  nothing.
+- The grapher destroyed the graph you were looking at when the *next* file
+  failed to parse.
+- Stairinator kept showing the previous filename after a failed load, while
+  holding no file at all.
+- The grapher's `arrayBuffer()` had no rejection handler, so an unreadable file
+  showed nothing whatsoever.
+- The grapher silently discarded your metric choices when a file's sport didn't
+  match them; it now says so.
+
+`test/behaviour.js` asserts all of this in a real browser, because it is DOM
+behaviour and cannot be checked any other way.
+
 ### Known loose ends
 
 - `apps/lap-graphs/docs/` still describes the original TypeScript/React version
@@ -125,12 +170,18 @@ Unified deliberately, per the brief:
 ## Tests
 
 ```
-node test/run.js
+node test/run.js         # FIT decode / encode / adapters — 26 tests
+node test/behaviour.js   # UI behaviour, driven in headless Chrome
 ```
 
-Fixtures are synthesised by the encoder rather than read from disk, because the
-real activity files are personal data and gitignored — so the suite runs from a
-clean checkout. If those files happen to be present they get exercised too.
+`run.js` fixtures are synthesised by the encoder rather than read from disk,
+because the real activity files are personal data and gitignored — so the suite
+runs from a clean checkout. If those files happen to be present they get
+exercised too.
+
+`behaviour.js` needs Chrome and skips cleanly without it. It drives the real
+pages: loads a good file and a deliberately bad one into each app and asserts
+what the user actually ends up looking at.
 
 ## Personal data
 
