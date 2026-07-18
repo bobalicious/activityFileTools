@@ -48,8 +48,14 @@
     lengthTime: '#3b6ea5',
     strokes: '#8e6fd8',
     swolf: '#e08a2b',
-    // stair climbing
-    plan: '#2f6feb',
+    /* stair climbing — only ever two lines on one chart, so the pair is chosen
+     * to stay apart for colour-blind viewers rather than to follow convention.
+     * Green against the usual red heart-rate line measures ΔE 13 under
+     * deuteranopia and 18 under protanopia, i.e. effectively the same colour
+     * for ~8% of men; against this purple it is 111 and 132. That is why the
+     * stair chart does not reuse `heartRate` below. */
+    plan: '#16a34a',
+    planHeartRate: '#9333ea',
     altitude: '#8e6fd8'
   };
 

@@ -205,9 +205,13 @@ for free, one element at 0.45 opacity for depth, and exactly one filled circle
 as the focal point. Tests assert the recipe holds and that no page references an
 icon name that doesn't exist — a typo there renders nothing, silently.
 
-Stairinator's chart keeps its blue plan line rather than following the green
-accent: the heart-rate trace is red, and green/red is the one pairing that
-disappears for the most common form of colour blindness.
+Stairinator's chart follows the green accent, and its heart-rate trace moved
+from red to purple to go with it. Green against red measures ΔE 13 under
+deuteranopia and 18 under protanopia — effectively the same colour for the ~8%
+of men with red-green colour blindness. Against purple it is 111 and 132. The
+grapher's own `heartRate` stays red, because it is plotted against a different
+set of series; the stair chart uses a separate `planHeartRate` entry. A test
+simulates both conditions and fails if the pair ever drifts back together.
 
 The app bar is a constant height everywhere. It had been shorter on
 `settings.html`, because the bar takes its height from its tallest child and

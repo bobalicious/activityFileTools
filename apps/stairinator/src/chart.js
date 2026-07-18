@@ -6,9 +6,11 @@
 
   var PAD = { top: 16, right: 54, bottom: 28, left: 46 };
   // Series colours are shared with the other tools — see shared/ui/chart-theme.js.
-  var HR_COLOR = window.ChartTheme.SERIES.heartRate;
+  // Note this uses planHeartRate rather than the usual heartRate: red against
+  // the green plan line is indistinguishable for red-green colour blindness.
+  var HR_COLOR = window.ChartTheme.SERIES.planHeartRate;
   var PLAN_COLOR = window.ChartTheme.SERIES.plan;
-  var WINDOW_FILL = 'rgba(47,111,235,0.08)';
+  var WINDOW_FILL = 'rgba(22, 163, 74, 0.10)';
 
   function create(canvas, callbacks) {
     callbacks = callbacks || {};

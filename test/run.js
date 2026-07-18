@@ -331,6 +331,45 @@ console.log('\nshared/ui/icons.js');
     eq(Icons.svg('nope'), '', 'expected an empty string');
   });
 
+  check('the stair chart pair stays apart for colour-blind viewers', () => {
+    // Two lines on one chart, so they have to be told apart by hue alone.
+    // Simulates protanopia and deuteranopia (Viénot LMS) and measures ΔE76.
+    const CT = require(path.join(ROOT, 'shared/ui/chart-theme.js'));
+    const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+    const lin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    const delin = c => { c = Math.max(0, Math.min(1, c));
+      return 255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055); };
+    const mul = (m, v) => m.map(r => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
+    const RGB2LMS = [[0.31399022, 0.63951294, 0.04649755],
+                     [0.15537241, 0.75789446, 0.08670142],
+                     [0.01775239, 0.10944209, 0.87256922]];
+    const LMS2RGB = [[5.47221206, -4.6419601, 0.16963708],
+                     [-1.1252419, 2.29317094, -0.1678952],
+                     [0.02980165, -0.19318073, 1.16364789]];
+    const SIM = {
+      protanopia: [[0, 1.05118294, -0.05116099], [0, 1, 0], [0, 0, 1]],
+      deuteranopia: [[1, 0, 0], [0.9513092, 0, 0.04866992], [0, 0, 1]]
+    };
+    const sim = (hex, k) => mul(LMS2RGB, mul(SIM[k], mul(RGB2LMS, hex2rgb(hex).map(lin)))).map(delin);
+    const lab = rgb => {
+      const [r, g, b] = rgb.map(v => lin(Math.max(0, Math.min(255, v))));
+      const f = t => t > 0.008856 ? Math.cbrt(t) : (7.787 * t + 16 / 116);
+      const X = f((r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047);
+      const Y = f(r * 0.2126 + g * 0.7152 + b * 0.0722);
+      const Z = f((r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883);
+      return [116 * Y - 16, 500 * (X - Y), 200 * (Y - Z)];
+    };
+    const dE = (a, b) => {
+      const [l1, l2] = [lab(a), lab(b)];
+      return Math.sqrt((l1[0] - l2[0]) ** 2 + (l1[1] - l2[1]) ** 2 + (l1[2] - l2[2]) ** 2);
+    };
+    ['protanopia', 'deuteranopia'].forEach(function (k) {
+      const d = dE(sim(CT.SERIES.plan, k), sim(CT.SERIES.planHeartRate, k));
+      assert(d > 40, 'plan vs heart rate is ΔE ' + d.toFixed(0) + ' under ' + k +
+        ' — too close to tell apart');
+    });
+  });
+
   check('every icon follows the shared drawing rules', () => {
     Object.keys(Icons.PATHS).forEach(function (name) {
       const svg = Icons.svg(name);
