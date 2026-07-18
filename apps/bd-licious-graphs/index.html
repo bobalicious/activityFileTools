@@ -30,8 +30,9 @@
     <script type="text/markdown" id="help-src">
 # bd-licious graphs
 
-Load a FIT file and chart it — pace, cadence, stride and heart rate for runs,
-per-length pace, time, strokes and SWOLF for pool swims.
+Load a FIT file and chart it — pace, cadence, stride length, heart rate, ground
+contact time and vertical oscillation for runs; per-length pace, time, strokes
+and SWOLF for pool swims.
 
 ## How to use it
 
@@ -42,6 +43,17 @@ per-length pace, time, strokes and SWOLF for pool swims.
    **Linked** to the shared colour for that metric.
 3. **Your graph** — adjust the y-axis start with the vertical slider, then
    **Download PNG** to save the image.
+
+## Run dynamics
+
+**Ground contact** and **vertical oscillation** come straight from the watch,
+and only appear if yours records them — a footpod or a chest strap that measures
+running dynamics. Both are drawn on an axis that starts near the data rather
+than at zero, because the interesting variation is a few percent and anchoring
+at zero would flatten it.
+
+**Stride** uses the step length your watch recorded where there is one, and
+otherwise derives it from speed and cadence.
 
 ## Graph types
 

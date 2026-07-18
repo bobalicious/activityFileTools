@@ -198,6 +198,64 @@ check('stairinator encoder output is byte-stable', () => {
      'encoded bytes drifted');
 });
 
+console.log('\nrun dynamics');
+
+(function () {
+  // These fields are absent from the format reference, so the scales are
+  // pinned here against values a runner can actually produce. Getting a scale
+  // wrong shows plausible-looking nonsense rather than failing outright.
+  const rec = { 253: 1000, 4: 83, 53: 64, 6: 2410,
+                39: 837,    // vertical_oscillation, scale 10 -> 83.7 mm
+                41: 2100,   // stance_time,          scale 10 -> 210 ms
+                85: 8730 }; // step_length,          scale 10 -> 873 mm
+  const decoded = {
+    byGlobal: {
+      18: [{ fields: { 5: 1, 2: 0 } }],
+      20: [{ fields: rec }],
+      19: [{ fields: { 2: 0, 7: 60000, 13: 2410, 17: 83,
+                       77: 925,    // avg_vertical_oscillation -> 92.5 mm
+                       79: 2575 }  // avg_stance_time          -> 257.5 ms
+      }]
+    }
+  };
+  const m = A.toActivityModel(decoded);
+  const s = m.samples[0], lap = m.laps[0];
+
+  check('vertical oscillation is read in millimetres', () => {
+    eq(s.verticalOscillation, 83.7, 'sample');
+    eq(lap.avgVerticalOscillation, 92.5, 'lap');
+  });
+
+  check('ground contact time is read in milliseconds', () => {
+    eq(s.groundContactTime, 210, 'sample');
+    eq(lap.avgGroundContactTime, 257.5, 'lap');
+  });
+
+  check('step length is read in metres', () => {
+    eq(s.stepLength, 0.873, 'sample');
+  });
+
+  check('step length x cadence reproduces the recorded speed', () => {
+    // The check that proved the scaling on a real file: if step length were out
+    // by a factor of ten this would be 0.1x or 10x rather than ~1.
+    const ratio = (s.stepLength * s.cadence / 60) / s.speed;
+    assert(ratio > 0.95 && ratio < 1.05, 'ratio ' + ratio.toFixed(3));
+  });
+
+  check('a file without run dynamics leaves them undefined', () => {
+    const plain = A.toActivityModel({ byGlobal: {
+      18: [{ fields: { 5: 1, 2: 0 } }],
+      20: [{ fields: { 253: 1000, 4: 83, 6: 2410 } }],
+      19: [{ fields: { 2: 0, 7: 60000 } }]
+    } });
+    const p = plain.samples[0];
+    assert(p.groundContactTime === undefined, 'gct should be undefined');
+    assert(p.verticalOscillation === undefined, 'vertical oscillation should be undefined');
+    assert(p.stepLength === undefined, 'step length should be undefined');
+    assert(p.cadence != null, 'cadence should still be read');
+  });
+})();
+
 console.log('\nshared/ui/settings.js');
 
 // settings.js talks to localStorage; give it one.

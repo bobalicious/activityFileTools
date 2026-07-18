@@ -12,16 +12,18 @@
     cadence: { label: 'Cadence', short: 'Cad', unit: 'spm', zeroBased: true, decimals: 0 },
     stride: { label: 'Stride length', short: 'Stride', unit: 'm', zeroBased: true, decimals: 2 },
     heartRate: { label: 'Heart rate', short: 'HR', unit: 'bpm', zeroBased: true, decimals: 0 },
+    // Not zero-based: these vary over a narrow band well away from zero, and
+    // anchoring the axis at 0 would flatten the whole point of looking at them.
+    gct: { label: 'Ground contact', short: 'GCT', unit: 'ms', zeroBased: false, decimals: 0 },
+    verticalOscillation: { label: 'Vertical oscillation', short: 'Vert osc', unit: 'mm', zeroBased: false, decimals: 1 },
     swimPace: { label: 'Pace', short: 'Pace', unit: '/100m', zeroBased: true, decimals: 0, paceMetres: 100 },
     lengthTime: { label: 'Time / length', short: 'Time', unit: '', zeroBased: true, decimals: 0, isTime: true },
     strokes: { label: 'Strokes / length', short: 'Strokes', unit: '', zeroBased: true, decimals: 0 },
     swolf: { label: 'SWOLF', short: 'SWOLF', unit: '', zeroBased: true, decimals: 0 },
   };
-  var METRIC_COLORS = {
-    pace: '#fc4c02', cadence: '#2f80ed', stride: '#27ae60', heartRate: '#eb5757',
-    swimPace: '#0aa5c9', lengthTime: '#3b6ea5', strokes: '#8e6fd8', swolf: '#e08a2b',
-  };
-  var RUN_METRICS = ['pace', 'cadence', 'stride', 'heartRate'];
+  // One source for series colours — see shared/ui/chart-theme.js.
+  var METRIC_COLORS = window.ChartTheme.SERIES;
+  var RUN_METRICS = ['pace', 'cadence', 'stride', 'heartRate', 'gct', 'verticalOscillation'];
   var SWIM_METRICS = ['swimPace', 'lengthTime', 'strokes', 'swolf'];
 
   function num(v) { return typeof v === 'number' ? v : undefined; }
@@ -47,6 +49,8 @@
       case 'cadence': return lap.avgCadence;
       case 'stride': return lap.avgStepLength != null ? lap.avgStepLength : strideLength(lap.avgSpeed, lap.avgCadence);
       case 'heartRate': return lap.avgHeartRate;
+      case 'gct': return lap.avgGroundContactTime;
+      case 'verticalOscillation': return lap.avgVerticalOscillation;
       case 'swimPace': return lap.avgSpeed;
       case 'lengthTime': return lap.elapsedTime;
       case 'strokes': return lap.strokes;
@@ -59,6 +63,8 @@
       case 'cadence': return s.cadence;
       case 'stride': return s.stepLength != null ? s.stepLength : strideLength(s.speed, s.cadence);
       case 'heartRate': return s.heartRate;
+      case 'gct': return s.groundContactTime;
+      case 'verticalOscillation': return s.verticalOscillation;
       default: return undefined; // swim metrics have no per-sample data
     }
   }

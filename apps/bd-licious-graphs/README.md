@@ -33,10 +33,15 @@ HR zones, swim support, saved configs, PNG export.
 
 - **Saved configs & HR zones** use `localStorage`, which on `file://` is per-browser
   and not shared with the built version on `main`. Fine for personal use.
-- The decoder targets the fields these devices actually record (pace, cadence, HR,
-  distance for runs; per-length pace/time/strokes/SWOLF for swims). Run-dynamics
-  fields not in the format reference (ground contact, vertical osc./ratio) aren't
-  decoded here — add their field numbers to `fit.js` if a device provides them.
+- Runs graph pace, cadence, stride length, heart rate, ground contact time and
+  vertical oscillation; swims graph per-length pace, time, strokes and SWOLF.
+- The run-dynamics fields (ground contact, vertical oscillation, step length) are
+  not in the format reference, so their scales were established against a real
+  file rather than assumed — see `shared/fit/adapters.js`. A device that doesn't
+  record them just leaves those metrics empty. Vertical ratio and stance-time
+  balance are present in files but not yet graphed.
+- Stride length uses the device's own step length where it records one, and falls
+  back to deriving it from speed and cadence where it doesn't.
 - Verified headlessly (decoder vs the Garmin SDK values; chart output; UI wiring).
   The PNG export uses browser canvas APIs — confirm it in your browser.
 

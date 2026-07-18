@@ -66,7 +66,14 @@
     var startMs = startDate.getTime();
     var toSec = function (fitSec) { return fitSec == null ? 0 : (fitSec + FIT_EPOCH) * 1000 / 1000 - startMs / 1000; };
 
-    // records -> samples (speed/cadence/HR/distance)
+    /* records -> samples (speed/cadence/HR/distance, plus run dynamics)
+     *
+     * The run-dynamics fields are absent from the format reference this decoder
+     * was written against, so their scales were verified against a real file
+     * rather than assumed: step length x cadence reproduces the recorded speed
+     * to a median of 1.003, and the resulting ground contact (~210 ms) and
+     * vertical oscillation (~84 mm) land where a runner's should. Devices that
+     * do not record them simply leave these undefined. */
     var samples = recMesgs.map(function (r) {
       var cad = num(r[4]);
       var frac = num(r[53]);
@@ -76,6 +83,9 @@
         speed: div(r[73], 1000) != null ? div(r[73], 1000) : div(r[6], 1000),
         heartRate: num(r[3]),
         cadence: cad != null ? (cad + (frac != null ? frac / 128 : 0)) * 2 : undefined,
+        verticalOscillation: div(r[39], 10),      // mm
+        groundContactTime: div(r[41], 10),        // ms
+        stepLength: div(r[85], 10000),            // mm -> m, to match stride
       };
     });
 
@@ -118,6 +128,11 @@
           avgCadence: cad != null ? cad * 2 : undefined,  // per-leg -> steps/min
           avgHeartRate: num(l[15]),
           maxHeartRate: num(l[16]),
+          // Run dynamics, where the device recorded them per lap. There is no
+          // lap-level step length in the files seen so far, so the grapher
+          // derives that one from speed and cadence.
+          avgVerticalOscillation: div(l[77], 10),   // mm
+          avgGroundContactTime: div(l[79], 10),     // ms
           startIndex: range[0], endIndex: range[1],
           isRest: false, restSource: 'none',
         };

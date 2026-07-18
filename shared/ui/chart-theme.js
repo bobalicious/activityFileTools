@@ -43,6 +43,13 @@
     cadence: '#2f80ed',
     stride: '#27ae60',
     heartRate: '#eb5757',
+    /* Run dynamics. The four above already sit at a worst-case ΔE of 8.6 under
+     * simulated colour blindness, so nothing can be added that improves on
+     * that; these two were picked as the only pair that does not make it
+     * worse. Each metric row has its own colour picker for anyone who needs
+     * something different. */
+    gct: '#7048e8',
+    verticalOscillation: '#a16207',
     // swimming
     swimPace: '#0aa5c9',
     lengthTime: '#3b6ea5',
