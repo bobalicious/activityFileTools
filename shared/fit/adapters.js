@@ -47,6 +47,22 @@
 
   // ---- activity model (the grapher) --------------------------------------
 
+  /* Vertical oscillation as a percentage of step length — how much of your
+   * effort goes up rather than forward. Devices that record it are believed
+   * over anything derived here; the fallback is for one that reports the two
+   * inputs but not the ratio.
+   *
+   * It is oscillation over *step* length, not over a two-step stride, despite
+   * how the metric is usually described. Checked against a real file: dividing
+   * by step length reproduces the recorded field to a median of 1.02, while
+   * dividing by a two-step stride comes out at 0.51 — exactly half, i.e. wrong.
+   */
+  function verticalRatio(recorded, vertOscMm, stepM) {
+    if (recorded != null) return recorded;
+    if (vertOscMm == null || !stepM) return undefined;
+    return vertOscMm / (stepM * 1000) * 100;
+  }
+
   function fitDate(fitSec) { return fitSec == null ? undefined : new Date((fitSec + FIT_EPOCH) * 1000); }
   var SPORT = { 0: 'generic', 1: 'running', 2: 'cycling', 5: 'swimming', 11: 'walking' };
   function num(v) { return typeof v === 'number' ? v : undefined; }
@@ -77,15 +93,18 @@
     var samples = recMesgs.map(function (r) {
       var cad = num(r[4]);
       var frac = num(r[53]);
+      var vertOsc = div(r[39], 10);               // mm
+      var step = div(r[85], 10000);               // mm -> m, to match stride
       return {
         t: toSec(r[253]),
         distance: div(r[5], 100),
         speed: div(r[73], 1000) != null ? div(r[73], 1000) : div(r[6], 1000),
         heartRate: num(r[3]),
         cadence: cad != null ? (cad + (frac != null ? frac / 128 : 0)) * 2 : undefined,
-        verticalOscillation: div(r[39], 10),      // mm
+        verticalOscillation: vertOsc,
         groundContactTime: div(r[41], 10),        // ms
-        stepLength: div(r[85], 10000),            // mm -> m, to match stride
+        stepLength: step,
+        verticalRatio: verticalRatio(div(r[83], 100), vertOsc, step),
       };
     });
 

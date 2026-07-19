@@ -31,8 +31,8 @@
 # bd-licious graphs
 
 Load a FIT file and chart it — pace, cadence, stride length, heart rate, ground
-contact time and vertical oscillation for runs; per-length pace, time, strokes
-and SWOLF for pool swims.
+contact time, vertical oscillation and vertical ratio for runs; per-length pace,
+time, strokes and SWOLF for pool swims.
 
 ## How to use it
 
@@ -46,11 +46,15 @@ and SWOLF for pool swims.
 
 ## Run dynamics
 
-**Ground contact** and **vertical oscillation** come straight from the watch,
-and only appear if yours records them — a footpod or a chest strap that measures
-running dynamics. Both vary over a fairly narrow band, so the y-axis slider
-beside the chart is worth reaching for: drag it up to cut off the empty space
-below the data and stretch out the variation.
+**Ground contact**, **vertical oscillation** and **vertical ratio** come
+straight from the watch, and only appear if yours records them — a footpod or a
+chest strap that measures running dynamics. They vary over a fairly narrow band,
+so the y-axis slider beside the chart is worth reaching for: drag it up to cut
+off the empty space below the data and stretch out the variation.
+
+**Vertical ratio** is vertical oscillation as a percentage of step length — how
+much of your effort goes up rather than forward, so lower is better. It is taken
+from the watch where recorded, and worked out from the other two where not.
 
 **Stride** uses the step length your watch recorded where there is one, and
 otherwise derives it from speed and cadence.

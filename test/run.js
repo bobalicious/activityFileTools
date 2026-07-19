@@ -242,6 +242,36 @@ console.log('\nrun dynamics');
     assert(ratio > 0.95 && ratio < 1.05, 'ratio ' + ratio.toFixed(3));
   });
 
+  check('vertical ratio is read from the device where recorded', () => {
+    // 6.71% is what the file actually stores alongside this oscillation and
+    // step length — the device's own figure wins over any derivation.
+    const withRatio = A.toActivityModel({ byGlobal: {
+      18: [{ fields: { 5: 1, 2: 0 } }],
+      20: [{ fields: Object.assign({}, rec, { 83: 671 }) }],
+      19: [{ fields: { 2: 0, 7: 60000 } }]
+    } });
+    eq(withRatio.samples[0].verticalRatio, 6.71, 'recorded value');
+  });
+
+  check('vertical ratio is oscillation over step length, not over a stride', () => {
+    // Dividing by a two-step stride would give half this. Verified against a
+    // real file, where step length reproduces the recorded field to 1.02 and
+    // the two-step reading comes out at 0.51.
+    const derived = s.verticalOscillation / (s.stepLength * 1000) * 100;
+    assert(Math.abs(derived - 9.59) < 0.05, 'derived ' + derived.toFixed(2));
+    eq(Math.round(s.verticalRatio * 100) / 100, 9.59, 'fallback derivation');
+  });
+
+  check('vertical ratio needs both inputs to be derived', () => {
+    const noStep = A.toActivityModel({ byGlobal: {
+      18: [{ fields: { 5: 1, 2: 0 } }],
+      20: [{ fields: { 253: 1000, 4: 83, 6: 2410, 39: 837 } }],
+      19: [{ fields: { 2: 0, 7: 60000 } }]
+    } });
+    assert(noStep.samples[0].verticalRatio === undefined,
+      'should not invent a ratio without a step length');
+  });
+
   check('a file without run dynamics leaves them undefined', () => {
     const plain = A.toActivityModel({ byGlobal: {
       18: [{ fields: { 5: 1, 2: 0 } }],
@@ -252,6 +282,7 @@ console.log('\nrun dynamics');
     assert(p.groundContactTime === undefined, 'gct should be undefined');
     assert(p.verticalOscillation === undefined, 'vertical oscillation should be undefined');
     assert(p.stepLength === undefined, 'step length should be undefined');
+    assert(p.verticalRatio === undefined, 'vertical ratio should be undefined');
     assert(p.cadence != null, 'cadence should still be read');
   });
 })();

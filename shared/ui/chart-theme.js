@@ -50,6 +50,7 @@
      * something different. */
     gct: '#7048e8',
     verticalOscillation: '#a16207',
+    verticalRatio: '#65a30d',
     // swimming
     swimPace: '#0aa5c9',
     lengthTime: '#3b6ea5',

@@ -16,6 +16,7 @@
     // y-axis slider is there for anyone who wants to zoom into it.
     gct: { label: 'Ground contact', short: 'GCT', unit: 'ms', zeroBased: true, decimals: 0 },
     verticalOscillation: { label: 'Vertical oscillation', short: 'Vert osc', unit: 'mm', zeroBased: true, decimals: 1 },
+    verticalRatio: { label: 'Vertical ratio', short: 'Vert ratio', unit: '%', zeroBased: true, decimals: 1 },
     swimPace: { label: 'Pace', short: 'Pace', unit: '/100m', zeroBased: true, decimals: 0, paceMetres: 100 },
     lengthTime: { label: 'Time / length', short: 'Time', unit: '', zeroBased: true, decimals: 0, isTime: true },
     strokes: { label: 'Strokes / length', short: 'Strokes', unit: '', zeroBased: true, decimals: 0 },
@@ -23,7 +24,8 @@
   };
   // One source for series colours — see shared/ui/chart-theme.js.
   var METRIC_COLORS = window.ChartTheme.SERIES;
-  var RUN_METRICS = ['pace', 'cadence', 'stride', 'heartRate', 'gct', 'verticalOscillation'];
+  var RUN_METRICS = ['pace', 'cadence', 'stride', 'heartRate', 'gct',
+                     'verticalOscillation', 'verticalRatio'];
   var SWIM_METRICS = ['swimPace', 'lengthTime', 'strokes', 'swolf'];
 
   function num(v) { return typeof v === 'number' ? v : undefined; }
@@ -51,6 +53,9 @@
       case 'heartRate': return lap.avgHeartRate;
       case 'gct': return lap.avgGroundContactTime;
       case 'verticalOscillation': return lap.avgVerticalOscillation;
+      // No lap-level vertical ratio in the files seen so far, so lapStats
+      // averages the per-record values instead.
+      case 'verticalRatio': return lap.avgVerticalRatio;
       case 'swimPace': return lap.avgSpeed;
       case 'lengthTime': return lap.elapsedTime;
       case 'strokes': return lap.strokes;
@@ -65,6 +70,7 @@
       case 'heartRate': return s.heartRate;
       case 'gct': return s.groundContactTime;
       case 'verticalOscillation': return s.verticalOscillation;
+      case 'verticalRatio': return s.verticalRatio;
       default: return undefined; // swim metrics have no per-sample data
     }
   }
