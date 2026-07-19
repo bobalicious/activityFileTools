@@ -12,10 +12,10 @@
     cadence: { label: 'Cadence', short: 'Cad', unit: 'spm', zeroBased: true, decimals: 0 },
     stride: { label: 'Stride length', short: 'Stride', unit: 'm', zeroBased: true, decimals: 2 },
     heartRate: { label: 'Heart rate', short: 'HR', unit: 'bpm', zeroBased: true, decimals: 0 },
-    // Not zero-based: these vary over a narrow band well away from zero, and
-    // anchoring the axis at 0 would flatten the whole point of looking at them.
-    gct: { label: 'Ground contact', short: 'GCT', unit: 'ms', zeroBased: false, decimals: 0 },
-    verticalOscillation: { label: 'Vertical oscillation', short: 'Vert osc', unit: 'mm', zeroBased: false, decimals: 1 },
+    // Zero-based like everything else. These do vary over a narrow band, but the
+    // y-axis slider is there for anyone who wants to zoom into it.
+    gct: { label: 'Ground contact', short: 'GCT', unit: 'ms', zeroBased: true, decimals: 0 },
+    verticalOscillation: { label: 'Vertical oscillation', short: 'Vert osc', unit: 'mm', zeroBased: true, decimals: 1 },
     swimPace: { label: 'Pace', short: 'Pace', unit: '/100m', zeroBased: true, decimals: 0, paceMetres: 100 },
     lengthTime: { label: 'Time / length', short: 'Time', unit: '', zeroBased: true, decimals: 0, isTime: true },
     strokes: { label: 'Strokes / length', short: 'Strokes', unit: '', zeroBased: true, decimals: 0 },
