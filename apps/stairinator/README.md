@@ -34,7 +34,7 @@ before updating and **Import** afterwards if needed.
 
 1. **Stair machines** — Describe your machine: the **riser** (how far up each step
   takes you) and the **tread** (how far forward each step is), plus how many steps
-   per minute each level runs at. You can name each level. Climb rate and forward
+   per minute each level runs at. You can name each level. Climb rate and travel
    rate are worked out for you.
 2. **Activity plan** — Pick a machine and list your workout as level-and-duration
   (minutes and seconds) rows. Drag to reorder.
@@ -72,15 +72,21 @@ both automatically:
 If Strava still shows reduced elevation, open the activity on **strava.com** and
 remove the indoor tag.
 
-### Known limitation: Strava "Moving Time" shows 0
+### Distance and Strava "Moving Time"
 
-A stair machine moves you forward very slowly (~0.14 m/s), which is **below
-Strava's "moving" speed threshold** (roughly a 30-minute-mile pace). Once a GPS
-track is present, Strava recomputes moving time from speed and counts the whole
-activity as "resting", so the summary shows **Moving Time 0:00**. This can't be
-fixed from the file — Strava's Race tag (which would force elapsed time) isn't
-available for the Stair-Stepper type. Your **elapsed time** and **per-lap times**
-are correct; only the "Moving Time" summary is affected.
+Two options in step 4 decide the distance written to the file. **Both change the
+total distance.**
+
+- **Distance calculation** — **Distance over ground** (the default) measures
+  along the slope of the stairs: the hypotenuse of riser and tread for every
+  step. **Horizontal distance** counts only the forward part across the floor.
+- **Apply minimum pace** (on by default) — Strava works out **moving time** from
+  how fast the map position moves, and counts anything below about 0.25 m/s as
+  stopped. Stepping on a stair machine can be slower than that, so with this on
+  no stepping segment travels slower than **0.3 m/s**, whatever the level. That
+  keeps easy levels in your moving time, at the cost of a little extra distance
+  on them. Time before or after the plan, when you are not stepping, still counts
+  as stopped.
 
 ## Records: heart rate vs. 5-second ticks
 

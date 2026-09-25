@@ -3,11 +3,11 @@
 > A zero-backend, self-contained web app for turning stair-machine workouts into
 > **FIT activity files**: define your machine and workout plan, optionally upload a
 > heart-rate GPX or FIT file, align the two on a graph, and export a FIT activity
-> with altitude, forward distance, cadence and heart rate — and only a tiny
+> with altitude, distance, cadence and heart rate — and only a tiny
 > placeholder location (needed so Strava will display the climb).
 
 **Status:** Implemented.
-**Last updated:** 2026-07-09
+**Last updated:** 2026-09-25
 
 ---
 
@@ -41,9 +41,8 @@ fitness-equipment / stair-climbing so it is recognised correctly.
 **Location caveat.** We would prefer no coordinates, but Strava only *displays*
 elevation for activities that have a map (GPS). A barometric device makes Strava
 *trust* the file's altitude; a map makes it *show* it — both are needed. So each
-record carries a **tiny placeholder loop** (5 m radius at null-island, arc length
-equal to the forward distance so distance stays consistent). It is a meaningless
-placeholder, not a real place. See §6.4.
+record carries a **tiny placeholder loop** (5 m radius at null-island). It is a
+meaningless placeholder, not a real place. See §6.4.
 
 ---
 
@@ -58,7 +57,7 @@ placeholder, not a real place. See §6.4.
 | 5 | **Laps** | One lap per plan segment. |
 | 6 | **Duration mismatch** | Plan runs in **real time** anchored at a user-chosen start point (HR case). Before start → hold 0; after end → hold final. |
 | 7 | **Altitude** | Monotonic non-decreasing (climb rate clamped ≥ 0). |
-| 8 | **Distance** | Forward distance = tread × steps; altitude = riser × steps. |
+| 8 | **Distance** | User option: over ground = √(riser² + tread²) × steps (default), or horizontal = tread × steps; optional 0.3 m/s minimum pace. Altitude = riser × steps. |
 
 ---
 
@@ -69,10 +68,10 @@ placeholder, not a real place. See §6.4.
 - **Tread** — forward depth per step (metres).
 - **Level** — a machine setting; each maps to a cadence in **steps per minute** and has an editable **name**.
 - **Climb rate** — derived m/s: `stepsPerMin × riser ÷ 60`.
-- **Forward rate** — derived m/s: `stepsPerMin × tread ÷ 60`.
+- **Travel rate** — derived m/s: `stepsPerMin × step ÷ 60`, where step is `√(riser² + tread²)` over ground or `tread` horizontally.
 - **Plan / Activity** — an ordered list of segments, each `(level, minutes)`.
 - **Alignment offset** — the real timestamp at which segment 1 begins (HR case).
-- **E(t) / D(t)** — cumulative altitude / forward distance vs. elapsed plan time.
+- **E(t) / D(t)** — cumulative altitude / distance vs. elapsed plan time.
 
 ---
 
@@ -95,7 +94,7 @@ stairinator/
 ├── src/
 │   ├── model.js      ← data model, defaults, validation, migration
 │   ├── storage.js    ← localStorage persistence + JSON import/export
-│   ├── elevation.js  ← climb/forward rates; E(t), D(t), cadence, segment index
+│   ├── elevation.js  ← climb/travel rates; E(t), D(t), cadence, segment index
 │   ├── gpx.js        ← GPX parse (HR/time extraction) — input only
 │   ├── fit.js        ← FIT encoder (write activity) + decoder (read HR) 
 │   ├── align.js      ← time-alignment maths + chart series
@@ -172,20 +171,23 @@ stepHeight` and a default `tread`; unnamed levels get `name = String(level)`.
 
 ```
 climbRate(level)   = stepsPerMin × riser ÷ 60     (m/s up)
-forwardRate(level) = stepsPerMin × tread ÷ 60      (m/s forward)
+travelRate(level)  = stepsPerMin × step ÷ 60      (m/s)
+  step = √(riser² + tread²)   distance over ground (default)
+       = tread                horizontal distance
+  with minimum pace on: travelRate > 0 ? max(travelRate, 0.3) : 0
 ```
 
-### 6.2 Cumulative curves `E(t)` (altitude) and `D(t)` (forward distance)
+### 6.2 Cumulative curves `E(t)` (altitude) and `D(t)` (distance)
 
 `t` = seconds elapsed since plan start. Segments expand into constant-rate
 intervals; boundary values are pre-summed. Both curves hold at the edges:
 
 ```
 E(t): t≤0 → 0 ; t≥planEnd → totalClimb ; else elevStart_i + climbRate_i·(t−start_i)
-D(t): t≤0 → 0 ; t≥planEnd → totalDistance ; else distStart_i + fwdRate_i·(t−start_i)
+D(t): t≤0 → 0 ; t≥planEnd → totalDistance ; else distStart_i + travelRate_i·(t−start_i)
 ```
 
-Climb/forward rates are clamped to ≥ 0, so both curves are monotonic
+Climb/travel rates are clamped to ≥ 0, so both curves are monotonic
 non-decreasing for any input — the activity is always going up and forward.
 
 `cadenceAt(t)` returns the segment's steps/min inside `[0, planEnd)` and 0 outside.
@@ -213,9 +215,19 @@ record — when a file is loaded, updating live as the offset changes.
 ### 6.4 Placeholder location
 
 Each record gets a synthetic lat/lon on a **small loop** (5 m radius, centred at
-0,0) parameterised by the forward distance: `angle = distance / R`, so the loop's
-**arc length equals the forward distance**. This means Strava gets a map (so it
-displays elevation) and any GPS-derived distance matches our `distance` field. The
+0,0) parameterised by the distance: `angle = D / R`, so the loop's **arc length
+equals the distance**. This means Strava gets a map (so it displays elevation)
+and any GPS-derived distance matches our `distance` field.
+
+Strava derives **moving time** from the speed of the map position and counts
+anything below about 0.25 m/s as stopped (inferred from a real upload: the laps
+at 59 steps/min, 0.247 m/s, lost most of their time and nothing faster did).
+Positions are stored in whole semicircles (0.93 cm), which adds up to about
+±1.3 cm/s of jitter, so a speed near the cut-off straddles it second by second.
+The **minimum pace** option (§6.1) keeps every stepping segment at 0.3 m/s or
+more, which costs a little extra distance on easy levels. Stretches where nobody
+is stepping (0 steps/min, before or after the plan) stay stationary and correctly
+count as stopped. The
 altitude is *not* derived from these coordinates — it comes straight from `E(t)` —
 and because the file declares a trusted barometric device, Strava keeps it rather
 than replacing it with terrain elevation at 0,0.
@@ -273,13 +285,13 @@ land on Machines; once a machine exists it opens on Activity.
 ### 7.1 Stair Machines (tab)
 - Selector to choose which machine to edit, with Add / Delete.
 - Editor: name, **riser (m)**, **tread (m)**, and a levels table (editable name +
-  steps/min). A derived column shows climb and forward rates (m/min).
+  steps/min). A derived column shows climb and travel rates (m/min).
 
 ### 7.2 Activity Plan
 - Choose a machine (wide selector).
 - Segment editor: rows of `(level, minutes)` shown by level name; **drag-and-drop
   to reorder**; add/remove.
-- Summary: total time, total climb, forward distance, avg climb rate.
+- Summary: total time, total climb, distance, avg climb rate.
 
 ### 7.3 Align & preview *(optional)*
 - Upload a GPX or FIT file. If it has HR, an overlaid graph (HR + plan) with a
@@ -289,6 +301,10 @@ land on Machines; once a machine exists it opens on Activity.
 ### 7.4 Generate & download
 - **Start date/time** field (§6.3): editable + defaults to now with no file;
   read-only and file-derived (offset-adjusted) with a file.
+- **Distance calculation** (over ground / horizontal) and **Apply minimum pace**
+  (§6.1, §6.4), with a note that both change the total distance. Saved with the
+  rest of the data as `doc.options`; changing either redraws the step 2 summary
+  and the machine table.
 - One button: **Download FIT file**, enabled for any valid plan (with or without an
   uploaded file). Status text states whether it will use HR datapoints or 5 s ticks.
 

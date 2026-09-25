@@ -1,5 +1,5 @@
-// elevation.js — climb rate, forward-distance rate, and the cumulative curves
-// E(t) (altitude) and D(t) (forward distance) plus cadence, over plan time.
+// elevation.js — climb and travel rates, and the cumulative curves
+// E(t) (altitude) and D(t) (distance) plus cadence, over plan time.
 (function () {
   'use strict';
   window.Stair = window.Stair || {};
@@ -19,25 +19,39 @@
     if (spm == null) return null;
     return spm * riserOf(machine) / 60; // (steps/min * m/step) / 60 = m/s
   }
-  // Metres travelled forward per second at a given level.
-  function forwardRate(machine, level) {
+  // Metres travelled per second at a given level. 'ground' measures along the
+  // slope of the stairs (the hypotenuse of riser and tread); 'horizontal' only
+  // the forward part across the floor.
+  function travelRate(machine, level, mode) {
     var spm = model.levelCadence(machine, level);
     if (spm == null) return null;
-    return spm * treadOf(machine) / 60;
+    var step = mode === 'horizontal' ? treadOf(machine) : Math.hypot(riserOf(machine), treadOf(machine));
+    return spm * step / 60;
   }
+
+  // Slowest pace the "minimum pace" option lets a stepping segment travel at.
+  // Strava counts anything below about 0.25 m/s as stopped, and the rounding of
+  // the stored position adds about ±1.3 cm/s of jitter, so an easy level would
+  // otherwise lose moving time.
+  var MIN_SPEED = 0.3;
 
   // Build the full profile for a plan on its machine.
   // t is seconds elapsed since the plan start.
-  function buildProfile(plan, machine) {
+  // opts.distance: 'ground' (default) or 'horizontal' — see travelRate.
+  // opts.minPace: never travel slower than MIN_SPEED while stepping.
+  function buildProfile(plan, machine, opts) {
+    opts = opts || {};
     var elev = 0, dist = 0, t = 0;
     var intervals = [];
     (plan.segments || []).forEach(function (seg) {
       var cr = climbRate(machine, seg.level); if (cr == null || isNaN(cr) || cr < 0) cr = 0;
-      var fr = forwardRate(machine, seg.level); if (fr == null || isNaN(fr) || fr < 0) fr = 0;
+      var fr = travelRate(machine, seg.level, opts.distance); if (fr == null || isNaN(fr) || fr < 0) fr = 0;
+      // Not stepping at all is a genuine stop, so the floor only applies above 0.
+      if (opts.minPace && fr > 0) fr = Math.max(fr, MIN_SPEED);
       var spm = model.levelCadence(machine, seg.level); if (spm == null || isNaN(spm)) spm = 0;
       var dur = (Number(seg.minutes) || 0) * 60 + (Number(seg.seconds) || 0); if (!(dur > 0)) dur = 0;
       intervals.push({
-        start: t, end: t + dur, climbRate: cr, fwdRate: fr,
+        start: t, end: t + dur, climbRate: cr, travelRate: fr,
         stepsPerMin: spm, elevStart: elev, distStart: dist, level: seg.level
       });
       elev += cr * dur; dist += fr * dur; t += dur;
@@ -57,12 +71,12 @@
       var iv = find(time);
       return iv ? iv.elevStart + iv.climbRate * (time - iv.start) : finalElev;
     }
-    // Forward distance (metres): monotonic non-decreasing, holds at both ends.
+    // Distance (metres): monotonic non-decreasing, holds at both ends.
     function D(time) {
       if (time <= 0) return 0;
       if (time >= totalTime) return finalDist;
       var iv = find(time);
-      return iv ? iv.distStart + iv.fwdRate * (time - iv.start) : finalDist;
+      return iv ? iv.distStart + iv.travelRate * (time - iv.start) : finalDist;
     }
     // Cadence (steps/min): 0 outside the workout window.
     function cadenceAt(time) {
@@ -98,5 +112,5 @@
     };
   }
 
-  Stair.elevation = { climbRate: climbRate, forwardRate: forwardRate, buildProfile: buildProfile };
+  Stair.elevation = { climbRate: climbRate, travelRate: travelRate, MIN_SPEED: MIN_SPEED, buildProfile: buildProfile };
 })();

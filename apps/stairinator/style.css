@@ -23,6 +23,13 @@ select.wide { min-width: 16rem; }
 
 
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+/* Breathing room between the keep-a-copy warning and the download button. */
+.caution { margin-bottom: 16px; }
+/* Step 4's distance options, grouped in their own box. */
+.output-options { border: 1px solid var(--border); border-radius: 8px; padding: 12px 12px 0; margin-bottom: 12px; }
+.output-options .hint { margin-bottom: 12px; }
+/* Same padding and border as the select beside it, so their centres line up. */
+.output-options .opt-check { padding: 7px 0; border: 1px solid transparent; }
 label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-muted); }
 label.inline { flex-direction: row; align-items: center; gap: 6px; }
 label.checkbox { align-self: center; }

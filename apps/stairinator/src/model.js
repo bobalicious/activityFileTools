@@ -69,8 +69,9 @@
   }
 
   // Backfill fields on data loaded from older versions (unnamed levels;
-  // stepHeight → riser; missing tread).
+  // stepHeight → riser; missing tread; missing output options).
   function normalizeDoc(doc) {
+    doc.options = Object.assign({ distance: 'ground', minPace: true }, doc.options);
     (doc.machines || []).forEach(function (m) {
       if (m.riser == null) m.riser = (m.stepHeight != null ? m.stepHeight : 0.203);
       if (m.tread == null) m.tread = 0.255;

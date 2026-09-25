@@ -46,6 +46,9 @@
   function currentMachine() { return doc.machines.find(function (m) { return m.id === state.currentMachineId; }) || null; }
   function machineFor(plan) { return plan ? doc.machines.find(function (m) { return m.id === plan.machineId; }) : null; }
   function fmt(n, d) { return Number(n).toFixed(d == null ? 1 : d); }
+  // Every profile honours the output options in step 4, so the distance shown
+  // anywhere matches the file that gets written.
+  function profileFor(plan, machine) { return elevation.buildProfile(plan, machine, doc.options); }
 
   // ================= TABS =================
   function showTab(name) {
@@ -95,16 +98,16 @@
 
     var table = el('table', { class: 'levels' });
     function derivedText(lvl) {
-      var c = elevation.climbRate(m, lvl), f = elevation.forwardRate(m, lvl);
+      var c = elevation.climbRate(m, lvl), f = elevation.travelRate(m, lvl, doc.options.distance);
       if (c == null) return '—';
-      return '↑ ' + fmt(c * 60, 1) + ' m/min  ·  → ' + fmt(f * 60, 1) + ' m/min';
+      return '↑ ' + fmt(c * 60, 1) + ' m/min  ·  ↗ ' + fmt(f * 60, 1) + ' m/min';
     }
     function rebuildDerived() {
       Array.prototype.forEach.call(table.querySelectorAll('tr[data-lvl]'), function (tr) {
         tr.querySelector('.derived').textContent = derivedText(Number(tr.getAttribute('data-lvl')));
       });
     }
-    table.appendChild(el('tr', {}, [el('th', {}, ['Name']), el('th', {}, ['Steps/min']), el('th', {}, ['Climb · Forward'])]));
+    table.appendChild(el('tr', {}, [el('th', {}, ['Name']), el('th', {}, ['Steps/min']), el('th', {}, ['Climb · Travel'])]));
     m.levels.forEach(function (lv) {
       table.appendChild(el('tr', { 'data-lvl': lv.level }, [
         el('td', {}, [el('input', { type: 'text', value: lv.name != null ? lv.name : String(lv.level), style: 'width:7rem',
@@ -243,11 +246,11 @@
     var plan = currentPlan(); var machine = machineFor(plan);
     var errors = model.validatePlan(plan, machine);
     if (machine && plan) {
-      var prof = elevation.buildProfile(plan, machine);
+      var prof = profileFor(plan, machine);
       host.appendChild(el('div', { class: 'plan-summary' }, [
         stat('Total time', fmt(prof.totalTime / 60, 1) + ' min'),
         stat('Total climb', fmt(prof.totalClimb, 1) + ' m'),
-        stat('Forward distance', fmt(prof.totalDistance, 1) + ' m'),
+        stat('Distance', fmt(prof.totalDistance, 1) + ' m'),
         stat('Avg climb', prof.totalTime ? fmt(prof.totalClimb / prof.totalTime, 3) + ' m/s' : '—')
       ]));
     }
@@ -298,7 +301,7 @@
   function drawChart() {
     var plan = currentPlan(); var machine = machineFor(plan);
     if (!state.parsed || !plan || !machine) return;
-    var prof = elevation.buildProfile(plan, machine);
+    var prof = profileFor(plan, machine);
     var series = align.buildSeries(state.parsed, prof, state.offsetSec, state.planKind);
     chart.render(series, { planKind: state.planKind });
   }
@@ -338,21 +341,22 @@
     var status = $('#generate-status');
     if (!planValid) { status.textContent = 'Build a valid activity in step 2 to enable the download.'; return; }
     var haveHr = state.parsed && state.parsed.hasHr;
-    status.innerHTML = haveHr
+    status.textContent = (haveHr
       ? 'Ready: a record per heart-rate datapoint from your file, aligned by the offset in step 3.'
-      : 'Ready: no heart-rate file, so a record will be written every 5 seconds across the plan.';
+      : 'Ready: no heart-rate file, so a record will be written every 5 seconds across the plan.') +
+      ' Distance: ' + fmt(profileFor(plan, machine).totalDistance, 1) + ' m.';
   }
 
   // Assemble the FIT record/lap/session structures from the plan + optional HR.
   function buildFitInputs() {
     var plan = currentPlan(); var machine = machineFor(plan);
-    var prof = elevation.buildProfile(plan, machine);
+    var prof = profileFor(plan, machine);
     var records = [];
     var haveHr = state.parsed && state.parsed.hasHr;
 
     // Minimal placeholder location: a tiny loop whose arc length equals the
-    // forward distance, so Strava gets a "map" (needed to show elevation) while
-    // any GPS-derived distance still matches our distance field. The trusted
+    // distance, so Strava gets a "map" (needed to show elevation) while any
+    // GPS-derived distance still matches our distance field. The trusted
     // barometric device means Strava keeps our altitude, not the terrain's.
     var PH_LAT = 0, PH_LON = 0, PH_R = 5; // null-island placeholder, 5 m radius
     function placeholder(distanceM) {
@@ -364,9 +368,10 @@
     }
     // Which lap a record belongs to: a "pre" lap for HR before the climb starts,
     // one lap per climbing segment, and a "post" lap for HR after it finishes.
+    // A record exactly on a boundary starts the next lap, the plan end included.
     function lapKeyFor(elapsed) {
       if (elapsed < 0) return 'pre';
-      if (elapsed > prof.totalTime) return 'post';
+      if (elapsed >= prof.totalTime && prof.totalTime > 0) return 'post';
       return 'seg' + prof.segIndexAt(elapsed);
     }
     function rec(timeMs, elapsed, hr) {
@@ -420,9 +425,20 @@
       if (!g || g.key !== r.lapKey) groups.push({ key: r.lapKey, recs: [r] });
       else g.recs.push(r);
     });
+    // A lone record on the plan end, with nothing after it, is where the last
+    // lap finishes — not a zero-length lap of its own.
+    var tail = groups[groups.length - 1];
+    if (groups.length > 1 && tail.key === 'post' && tail.recs.length === 1) {
+      groups.pop(); groups[groups.length - 1].recs.push(tail.recs[0]);
+    }
     function avg(arr) { return arr.length ? arr.reduce(function (a, b) { return a + b; }, 0) / arr.length : 0; }
-    var laps = groups.map(function (g) {
-      var f = g.recs[0], last = g.recs[g.recs.length - 1];
+    var laps = groups.map(function (g, i) {
+      var f = g.recs[0];
+      // A lap runs until the next one starts, not just to its own last record —
+      // otherwise the interval between them belongs to no lap, and every lap
+      // comes up one record interval short of the session.
+      var next = groups[i + 1];
+      var last = next ? next.recs[0] : g.recs[g.recs.length - 1];
       var hrs = g.recs.map(function (r) { return r.hr; }).filter(function (h) { return h != null; });
       return {
         startTimeMs: f.timeMs, endTimeMs: last.timeMs,
@@ -561,7 +577,14 @@
     $('#plan-kind').addEventListener('change', function (e) { state.planKind = e.target.value; drawChart(); });
     $('#offset-input').addEventListener('input', function (e) { state.offsetSec = parseFloat(e.target.value) || 0; drawChart(); updateOffsetReadout(); });
 
-    // generate
+    // generate — output options change the distance, so everything showing it
+    // is redrawn: the step 2 summary, the machine table and the status line.
+    $('#opt-distance').addEventListener('change', function (e) {
+      doc.options.distance = e.target.value; persist(); renderMachines(); renderSummary();
+    });
+    $('#opt-min-pace').addEventListener('change', function (e) {
+      doc.options.minPace = e.target.checked; persist(); renderSummary();
+    });
     $('#btn-gen-fit').addEventListener('click', doGenerateFit);
 
     window.Help.install({
@@ -581,6 +604,8 @@
     var configured = doc.machines.length > 0;
     state.currentMachineId = doc.machines[0] ? doc.machines[0].id : null;
     state.currentPlanId = doc.plans[0] ? doc.plans[0].id : null;
+    $('#opt-distance').value = doc.options.distance;
+    $('#opt-min-pace').checked = !!doc.options.minPace;
     wire();
     renderMachines();
     refreshPlanUI();
