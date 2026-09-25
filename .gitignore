@@ -25,3 +25,6 @@ __*.html
 
 # Local Claude Code settings — machine-specific, not part of the project
 .claude/
+
+# Test and repro files that should never hit git
+supporting-files/
