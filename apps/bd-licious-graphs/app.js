@@ -15,7 +15,7 @@
     activity: null, laps: [],
     rows: [newRow('bar')],
     colors: Object.assign({}, COLORS),
-    sensitivity: 0.5, yStart: 0, showTime: true, showDistance: false,
+    sensitivity: 0.5, compressRests: false, yStart: 0, showTime: true, showDistance: false,
     theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     zones: (function () { var z = loadJSON(ZONE_KEY, null); return Array.isArray(z) && z.length === 5 ? z : DEFAULT_ZONES.slice(); })(),
     showZones: false,
@@ -76,6 +76,7 @@
     // global controls
     html += '<div class="controls">' +
       '<label class="control">Rest sensitivity<input type="range" min="0" max="1" step="0.05" value="' + state.sensitivity + '" data-k="sens" data-i="0"></label>' +
+      '<label class="control"><input type="checkbox" data-k="compressRests" data-i="0"' + (state.compressRests ? ' checked' : '') + '> Compress rests</label>' +
       '<div class="control">X-axis<label class="control"><input type="checkbox" data-k="showTime" data-i="0"' + (state.showTime ? ' checked' : '') + '> Time</label>' +
       '<label class="control"><input type="checkbox" data-k="showDist" data-i="0"' + (state.showDistance ? ' checked' : '') + '> Distance</label></div>' +
       '<div class="control">Graph theme<div class="metric-tabs">' + btn(state.theme === 'light', 'theme', 0, 'light', 'Light') + btn(state.theme === 'dark', 'theme', 0, 'dark', 'Dark') + '</div></div>' +
@@ -106,6 +107,7 @@
     return {
       laps: state.laps, samples: state.activity.samples, xDomain: G.workTimeDomain(state.laps),
       yStart: state.yStart, theme: state.theme, showTime: state.showTime, showDistance: state.showDistance,
+      compressRests: state.compressRests,
       zones: state.zones, showZones: state.showZones,
       rows: state.rows.map(function (r) { return Object.assign({}, r, { color: effColor(r) }); }),
     };
@@ -214,6 +216,7 @@
     else if (k === 'rests') updateRow(i, { rests: t.checked });
     else if (k === 'showTime') state.showTime = t.checked;
     else if (k === 'showDist') state.showDistance = t.checked;
+    else if (k === 'compressRests') state.compressRests = t.checked;
     else if (k === 'showZones') state.showZones = t.checked;
     else if (k === 'zone') { state.zones[i] = +t.value; saveJSON(ZONE_KEY, state.zones); }
     else if (k === 'toggleRest') { var lap = state.laps.find(function (l) { return l.index === i; }); if (lap) { lap.isRest = !lap.isRest; lap.restSource = 'manual'; } }
@@ -240,7 +243,7 @@
   // ---- configs ------------------------------------------------------------
   function saveConfig() {
     var name = (state.configName || '').trim(); if (!name) return;
-    var cfg = { name: name, rows: state.rows.map(function (r) { return Object.assign({}, r); }), colors: Object.assign({}, state.colors), yStart: state.yStart, showTime: state.showTime, showDistance: state.showDistance, showZones: state.showZones };
+    var cfg = { name: name, rows: state.rows.map(function (r) { return Object.assign({}, r); }), colors: Object.assign({}, state.colors), yStart: state.yStart, showTime: state.showTime, showDistance: state.showDistance, showZones: state.showZones, compressRests: state.compressRests };
     state.configs = state.configs.filter(function (c) { return c.name !== name; }).concat([cfg]).sort(function (a, b) { return a.name.localeCompare(b.name); });
     saveJSON(CFG_KEY, state.configs); renderBody();
   }
@@ -248,7 +251,7 @@
     var c = state.configs.find(function (x) { return x.name === name; }); if (!c) return;
     state.rows = c.rows.map(function (r) { return Object.assign(newRow('bar'), r, { linked: r.linked !== false, smoothingSec: r.smoothingSec || 10 }); });
     state.colors = Object.assign({}, COLORS, c.colors);
-    state.yStart = c.yStart || 0; state.showTime = c.showTime !== false; state.showDistance = !!c.showDistance; state.showZones = !!c.showZones;
+    state.yStart = c.yStart || 0; state.showTime = c.showTime !== false; state.showDistance = !!c.showDistance; state.showZones = !!c.showZones; state.compressRests = !!c.compressRests;
     state.configName = c.name; renderBody();
   }
 
